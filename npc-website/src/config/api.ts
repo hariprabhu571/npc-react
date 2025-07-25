@@ -29,6 +29,8 @@ export const API_ENDPOINTS = {
   // Offers
   FETCH_OFFERS: 'fetch_all_offers.php',
   FETCH_ALL_OFFERS: 'fetch_all_offers.php',
+  ADD_OFFER: 'add_offers.php',
+  DELETE_OFFER: 'delete_offers.php',
 
   // Profile
   USER_PROFILE: 'user_profile.php',

@@ -75,11 +75,12 @@ export interface Booking {
 export interface Offer {
   offer_id: string;
   offer_name: string;
-  description: string;
-  discount_percentage: number;
-  valid_until: string;
-  image_url?: string;
-  is_active: boolean;
+  coupon_number: string;
+  offer_starts_on: string;
+  expires_on: string;
+  offer_percentage: number;
+  offer_banner_location?: string;
+  status?: string;
 }
 
 // Employee types
