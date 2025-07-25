@@ -143,6 +143,12 @@ const ServiceModal: React.FC<{
   const [addImage, setAddImage] = useState<File | null>(null);
   const [addImagePreview, setAddImagePreview] = useState<string | null>(null);
 
+  // For employee details and reset password
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
   useEffect(() => {
     setServiceName(initialData?.service_name || '');
     setDescription(initialData?.description || '');
@@ -1056,6 +1062,36 @@ const AdminDashboard: React.FC = () => {
   const [services, setServices] = useState<any[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [showAddService, setShowAddService] = useState(false);
+  
+  // Services search, filter, and view state
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [serviceStatus, setServiceStatus] = useState('all');
+  const [serviceView, setServiceView] = useState<'table' | 'card' | 'list'>('table');
+
+  // Employee state
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  
+  // Employee search, filter, and view state
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeStatus, setEmployeeStatus] = useState('all');
+  const [employeeView, setEmployeeView] = useState<'table' | 'card' | 'list'>('table');
+  
+  // Add Employee state
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [addEmployeeLoading, setAddEmployeeLoading] = useState(false);
+  const [addEmployeeForm, setAddEmployeeForm] = useState({
+    employee_name: '',
+    phone_number: '',
+    service_type: '',
+    address: '',
+    email: '',
+    password: ''
+  });
+  const [addEmployeeIdProof, setAddEmployeeIdProof] = useState<File | null>(null);
+  const [addEmployeeIdProofPreview, setAddEmployeeIdProofPreview] = useState<string | null>(null);
   const fetchServices = async () => {
     setServicesLoading(true);
     try {
@@ -1075,6 +1111,18 @@ const AdminDashboard: React.FC = () => {
     }
   };
   useEffect(() => { if (activeTab === 'services') fetchServices(); }, [activeTab]);
+
+  // Filter services based on search and status
+  const filteredServices = services.filter((service: any) => {
+    const matchesSearch = service.service_name?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+                         service.description?.toLowerCase().includes(serviceSearch.toLowerCase());
+    
+    const matchesStatus = serviceStatus === 'all' || 
+                         (serviceStatus === 'active' && service.status !== 'inactive') ||
+                         (serviceStatus === 'inactive' && service.status === 'inactive');
+    
+    return matchesSearch && matchesStatus;
+  });
   const handleAddService = async (service: any) => {
     try {
       await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, {
@@ -1205,6 +1253,118 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Employee functions
+  const handleViewEmployee = (employee: any) => {
+    setSelectedEmployee(employee);
+    setShowEmployeeDetails(true);
+  };
+
+  const handleResetPassword = (employee: any) => {
+    setSelectedEmployee(employee);
+    setShowResetPasswordConfirm(true);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!selectedEmployee) return;
+
+    setResetPasswordLoading(true);
+    try {
+      const response = await apiService.post(API_ENDPOINTS.RESET_PASSWORD, {
+        technician_id: selectedEmployee.id,
+        newpassword: '12345'
+      });
+
+      if (response.status === 'success') {
+        toast.success('Password reset successfully. New password is: 12345');
+        setShowResetPasswordConfirm(false);
+        setSelectedEmployee(null);
+      } else {
+        toast.error(response.message || 'Failed to reset password');
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast.error('Failed to reset password. Please try again.');
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
+  // Add Employee handlers
+  const handleAddEmployee = () => {
+    setShowAddEmployee(true);
+    // Reset form
+    setAddEmployeeForm({
+      employee_name: '',
+      phone_number: '',
+      service_type: '',
+      address: '',
+      email: '',
+      password: ''
+    });
+    setAddEmployeeIdProof(null);
+    setAddEmployeeIdProofPreview(null);
+  };
+
+  const handleIdProofChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAddEmployeeIdProof(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAddEmployeeIdProofPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddEmployeeSubmit = async () => {
+    // Validate form
+    if (!addEmployeeForm.employee_name || !addEmployeeForm.phone_number || 
+        !addEmployeeForm.service_type || !addEmployeeForm.address || 
+        !addEmployeeForm.email || !addEmployeeForm.password || !addEmployeeIdProof) {
+      toast.error('Please fill all fields and upload ID proof');
+      return;
+    }
+
+    setAddEmployeeLoading(true);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1]; // Remove data:image/...;base64, prefix
+        
+        const formData = {
+          employee_name: addEmployeeForm.employee_name,
+          phone_number: addEmployeeForm.phone_number,
+          service_type: addEmployeeForm.service_type,
+          address: addEmployeeForm.address,
+          id_proof: base64,
+          email: addEmployeeForm.email,
+          password: addEmployeeForm.password
+        };
+
+        const response = await apiService.post(API_ENDPOINTS.ADD_TECHNICIAN, formData);
+        if (response.status === 'success') {
+          toast.success('Employee added successfully');
+          setShowAddEmployee(false);
+          // Refresh employees list
+          if (activeTab === 'employees') {
+            // Refetch employees data
+            window.location.reload(); // Simple refresh for now
+          }
+        } else {
+          toast.error(response.message || 'Failed to add employee');
+        }
+      };
+      reader.readAsDataURL(addEmployeeIdProof);
+    } catch (error: any) {
+      console.error('Add employee error:', error);
+      toast.error('Failed to add employee');
+    } finally {
+      setAddEmployeeLoading(false);
+    }
+  };
+
   // Fetch data
   const { data: bookingsData, isLoading: bookingsLoading, refetch: refetchBookings } = useQuery(
     'admin-bookings',
@@ -1254,6 +1414,20 @@ const AdminDashboard: React.FC = () => {
     address: emp.address,
     idProof: emp.id_proof,
   }));
+
+  // Filter employees based on search and status
+  const filteredEmployees = employees.filter((employee: any) => {
+    const matchesSearch = employee.name?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+                         employee.email?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+                         employee.mobile?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+                         employee.serviceType?.toLowerCase().includes(employeeSearch.toLowerCase());
+    
+    const matchesStatus = employeeStatus === 'all' || 
+                         (employeeStatus === 'active' && employee.status !== 'inactive') ||
+                         (employeeStatus === 'inactive' && employee.status === 'inactive');
+    
+    return matchesSearch && matchesStatus;
+  });
   const queriesDataAny = queriesData as any;
   const queries = queriesDataAny?.queries || queriesDataAny?.data?.queries || [];
 
@@ -1397,6 +1571,7 @@ const AdminDashboard: React.FC = () => {
             {activeTab === 'services' && (
               <h2 className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">Services</h2>
             )}
+
           </div>
           {/* Stats Cards - only on Overview */}
           {activeTab === 'overview' && (
@@ -1671,58 +1846,206 @@ const AdminDashboard: React.FC = () => {
 
             {activeTab === 'employees' && (
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h3 className="text-base font-semibold text-gray-900">Employees</h3>
-                  <button className="btn btn-primary text-sm">
-                    Add Employee
-                  </button>
+                {/* View Toggle, Search, and Filter Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50 mb-2">
+                  {/* Left: Search Bar */}
+                  <div className="relative w-full sm:w-[32rem] mb-2 sm:mb-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <FiSearch className="w-5 h-5" />
+                    </span>
+                    <input
+                      type="text"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm placeholder-gray-400"
+                      placeholder="Search employees..."
+                      value={employeeSearch}
+                      onChange={e => setEmployeeSearch(e.target.value)}
+                    />
+                  </div>
+                  {/* Right: Filter and View Toggle */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="employeeStatus" className="text-sm text-gray-500 font-medium hidden sm:block">Status:</label>
+                      <select
+                        id="employeeStatus"
+                        className="w-full sm:w-44 px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-white"
+                        value={employeeStatus}
+                        onChange={e => setEmployeeStatus(e.target.value)}
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                                         <div className="flex gap-2">
+                       <button
+                         className={`p-2 rounded-lg border ${employeeView === 'table' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                         title="Table View"
+                         onClick={() => setEmployeeView('table')}
+                       >
+                         <FiTable className="w-4 h-4" />
+                       </button>
+                       <button
+                         className={`p-2 rounded-lg border ${employeeView === 'card' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                         title="Card View"
+                         onClick={() => setEmployeeView('card')}
+                       >
+                         <FiGrid className="w-4 h-4" />
+                       </button>
+                       <button
+                         className={`p-2 rounded-lg border ${employeeView === 'list' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                         title="List View"
+                         onClick={() => setEmployeeView('list')}
+                       >
+                         <FiList className="w-4 h-4" />
+                       </button>
+                       <button 
+                         className="btn btn-primary text-sm ml-2"
+                         onClick={handleAddEmployee}
+                       >
+                         Add Employee
+                       </button>
+                     </div>
+                  </div>
                 </div>
+
+                                 {/* Add Employee Button - moved to view controls line */}
+
                 {employeesLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Employee
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Contact
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Service Type
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {employees.map((employee: any) => (
-                          <tr key={employee.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                              <div className="text-sm text-gray-500">{employee.email}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {employee.mobile}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {employee.serviceType}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                  <>
+                    {/* Table View */}
+                    {employeeView === 'table' && (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Employee
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contact
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Service Type
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredEmployees.map((employee: any) => (
+                              <tr key={employee.id}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                                  <div className="text-sm text-gray-500">{employee.email}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {employee.mobile}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {employee.serviceType}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={() => handleViewEmployee(employee)}
+                                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                                    >
+                                      View
+                                    </button>
+                                    <button
+                                      onClick={() => handleResetPassword(employee)}
+                                      className="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+                                    >
+                                      Reset Password
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Card View */}
+                    {employeeView === 'card' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                        {filteredEmployees.map((employee: any) => (
+                          <div key={employee.id} className="bg-white rounded-xl shadow p-5 flex flex-col gap-2 border border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-gray-900 text-base">{employee.name}</span>
                               <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 Active
                               </span>
-                            </td>
-                          </tr>
+                            </div>
+                            <div className="text-xs text-gray-500 mb-1">{employee.email}</div>
+                            <div className="text-sm text-gray-700 mb-1">{employee.mobile}</div>
+                            <div className="font-medium text-gray-700">{employee.serviceType}</div>
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleViewEmployee(employee)}
+                              >
+                                View Details
+                              </button>
+                              <button
+                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleResetPassword(employee)}
+                              >
+                                Reset Password
+                              </button>
+                            </div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </div>
+                    )}
+
+                    {/* List View */}
+                    {employeeView === 'list' && (
+                      <div className="divide-y divide-gray-100 bg-white rounded-xl shadow p-2">
+                        {filteredEmployees.map((employee: any) => (
+                          <div key={employee.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 px-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 text-sm truncate">{employee.name}</div>
+                              <div className="text-xs text-gray-500 truncate">{employee.email}</div>
+                              <div className="text-xs text-gray-700 truncate">{employee.mobile}</div>
+                              <div className="text-xs text-gray-400">{employee.serviceType}</div>
+                            </div>
+                            <div className="flex gap-2 mt-2 sm:mt-0">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Active
+                              </span>
+                              <button
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleViewEmployee(employee)}
+                              >
+                                View
+                              </button>
+                              <button
+                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleResetPassword(employee)}
+                              >
+                                Reset Password
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -1949,57 +2272,177 @@ const AdminDashboard: React.FC = () => {
 
             {activeTab === 'services' && (
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900">Services</h3>
-                    <p className="text-sm text-gray-500">
-                      {services.length} services • {services.filter((service: any) => {
-                        try {
-                          const parsed = typeof service.locations === 'string' ? JSON.parse(service.locations) : service.locations;
-                          return parsed && (Array.isArray(parsed) ? parsed.length > 0 : true);
-                        } catch {
-                          return false;
-                        }
-                      }).length} with locations • {services.filter((service: any) => service.image_path).length} with images
-                    </p>
+                {/* View Toggle, Search, and Filter Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50 mb-2">
+                  {/* Left: Search Bar */}
+                  <div className="relative w-full sm:w-[32rem] mb-2 sm:mb-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <FiSearch className="w-5 h-5" />
+                    </span>
+                    <input
+                      type="text"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm placeholder-gray-400"
+                      placeholder="Search services..."
+                      value={serviceSearch}
+                      onChange={e => setServiceSearch(e.target.value)}
+                    />
                   </div>
-                  <button className="btn btn-primary text-sm" onClick={() => setShowAddService(true)}>Add Service</button>
+                  {/* Right: Filter, View Toggle, and Add Service Button */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="serviceStatus" className="text-sm text-gray-500 font-medium hidden sm:block">Status:</label>
+                      <select
+                        id="serviceStatus"
+                        className="w-full sm:w-44 px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-white"
+                        value={serviceStatus}
+                        onChange={e => setServiceStatus(e.target.value)}
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className={`p-2 rounded-lg border ${serviceView === 'table' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="Table View"
+                        onClick={() => setServiceView('table')}
+                      >
+                        <FiTable className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg border ${serviceView === 'card' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="Card View"
+                        onClick={() => setServiceView('card')}
+                      >
+                        <FiGrid className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg border ${serviceView === 'list' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="List View"
+                        onClick={() => setServiceView('list')}
+                      >
+                        <FiList className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors" onClick={() => setShowAddService(true)}>
+                      Add Service
+                    </button>
+                  </div>
                 </div>
                 {servicesLoading ? (
                   <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created in (Date)</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {services.map((service: any) => (
-                          <tr key={service.service_id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <div className="font-medium">{service.service_name}</div>
-                              <div className="text-xs text-gray-500">{service.description}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <div className="text-xs text-gray-500">{service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap flex gap-2">
-                              <button className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition" onClick={() => { setEditingService(service); setActiveServiceModal('edit'); }}>View</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="p-6">
+                    {filteredServices.length === 0 ? (
+                      <div className="text-center py-12">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No services found</h3>
+                        <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Table View */}
+                        {serviceView === 'table' && (
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredServices.map((service: any) => (
+                                  <tr key={service.service_id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      <div className="font-medium">{service.service_name}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      <div className="text-sm text-gray-500">{service.description}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                      <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded font-semibold text-xs transition" onClick={() => { setEditingService(service); setActiveServiceModal('edit'); }}>
+                                        View
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Card View */}
+                        {serviceView === 'card' && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredServices.map((service: any) => (
+                              <div key={service.service_id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                <div className="p-6">
+                                  <div className="flex items-start justify-between mb-4">
+                                    <div className="flex-1">
+                                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.service_name}</h3>
+                                      <p className="text-sm text-gray-600 line-clamp-3">{service.description}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                    <span>Created: {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}</span>
+                                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>
+                                  </div>
+                                  <div className="flex justify-end">
+                                    <button 
+                                      className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded font-semibold text-sm transition"
+                                      onClick={() => { setEditingService(service); setActiveServiceModal('edit'); }}
+                                    >
+                                      View Details
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* List View */}
+                        {serviceView === 'list' && (
+                          <div className="space-y-4">
+                            {filteredServices.map((service: any) => (
+                              <div key={service.service_id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-gray-900">{service.service_name}</h3>
+                                    <p className="text-sm text-gray-600 mt-1">{service.description}</p>
+                                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                      <span>Created: {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}</span>
+                                      <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded font-semibold text-sm transition"
+                                    onClick={() => { setEditingService(service); setActiveServiceModal('edit'); }}
+                                  >
+                                    View
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
                             {/* Add/Edit Modal */}
@@ -2207,6 +2650,305 @@ const AdminDashboard: React.FC = () => {
                 )}
                 <div className="mt-4 flex justify-end gap-2">
                   <button className="btn btn-secondary" onClick={() => setViewedBooking(null)}>Close</button>
+                </div>
+              </Modal>
+            )}
+
+            {/* Employee Details Modal */}
+            {showEmployeeDetails && selectedEmployee && (
+              <Modal onClose={() => setShowEmployeeDetails(false)} size="small">
+                <h2 className="text-lg font-semibold mb-4">Employee Details</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Name:</span>
+                    <span className="text-gray-900">{selectedEmployee.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Email:</span>
+                    <span className="text-gray-900">{selectedEmployee.email || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Mobile:</span>
+                    <span className="text-gray-900">{selectedEmployee.mobile}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Service Type:</span>
+                    <span className="text-gray-900">{selectedEmployee.serviceType || 'General Service'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Address:</span>
+                    <span className="text-gray-900">{selectedEmployee.address || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Status:</span>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowEmployeeDetails(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </Modal>
+            )}
+
+            {/* Reset Password Confirmation Modal */}
+            {showResetPasswordConfirm && selectedEmployee && (
+              <Modal onClose={() => setShowResetPasswordConfirm(false)} size="small">
+                <h2 className="text-lg font-semibold mb-4">Reset Password</h2>
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-700 mb-2">
+                    Are you sure you want to reset the password for <strong>{selectedEmployee.name}</strong>?
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    The new password will be set to <strong>"12345"</strong>
+                  </p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowResetPasswordConfirm(false)}
+                    disabled={resetPasswordLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-primary bg-orange-600 hover:bg-orange-700" 
+                    onClick={confirmResetPassword}
+                    disabled={resetPasswordLoading}
+                  >
+                    {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </div>
+              </Modal>
+            )}
+
+            {/* Add Employee Modal */}
+            {showAddEmployee && (
+              <Modal onClose={() => setShowAddEmployee(false)} size="large">
+                <div className="max-w-2xl mx-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Add New Employee</h2>
+                    <button 
+                      onClick={() => setShowAddEmployee(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form onSubmit={(e) => { e.preventDefault(); handleAddEmployeeSubmit(); }} className="space-y-6">
+                    {/* Personal Information Section */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Personal Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Employee Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.employee_name}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, employee_name: e.target.value})}
+                            placeholder="Enter employee name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.phone_number}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, phone_number: e.target.value})}
+                            placeholder="Enter phone number"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email Address *
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.email}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, email: e.target.value})}
+                            placeholder="Enter email address"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password *
+                          </label>
+                          <input
+                            type="password"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.password}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, password: e.target.value})}
+                            placeholder="Enter password"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Service Information Section */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                        </svg>
+                        Service Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Service Type *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.service_type}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, service_type: e.target.value})}
+                            placeholder="e.g., Pest Control, General Service"
+                          />
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Address *
+                          </label>
+                          <textarea
+                            required
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            value={addEmployeeForm.address}
+                            onChange={(e) => setAddEmployeeForm({...addEmployeeForm, address: e.target.value})}
+                            placeholder="Enter complete address"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ID Proof Upload Section */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Identity Proof *
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center w-full">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              {addEmployeeIdProofPreview ? (
+                                <div className="relative">
+                                  <img 
+                                    src={addEmployeeIdProofPreview} 
+                                    alt="ID Proof Preview" 
+                                    className="max-h-20 max-w-full rounded"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setAddEmployeeIdProof(null);
+                                      setAddEmployeeIdProofPreview(null);
+                                    }}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                  </svg>
+                                  <p className="mb-2 text-sm text-gray-500">
+                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                  </p>
+                                  <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                                </>
+                              )}
+                            </div>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*,.pdf"
+                              onChange={handleIdProofChange}
+                              required={!addEmployeeIdProof}
+                            />
+                          </label>
+                        </div>
+                        
+                        {addEmployeeIdProof && (
+                          <div className="text-sm text-gray-600">
+                            <p><strong>Selected file:</strong> {addEmployeeIdProof.name}</p>
+                            <p><strong>Size:</strong> {(addEmployeeIdProof.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddEmployee(false)}
+                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                        disabled={addEmployeeLoading}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        disabled={addEmployeeLoading}
+                      >
+                        {addEmployeeLoading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Adding Employee...
+                          </>
+                        ) : (
+                          'Add Employee'
+                        )}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </Modal>
             )}
