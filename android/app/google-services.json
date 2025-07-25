@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873139331367",
+    "project_id": "npc-pest",
+    "storage_bucket": "npc-pest.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873139331367:android:8b615484cce4de66d78902",
+        "android_client_info": {
+          "package_name": "com.npc.npc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf9yYvXU_LQzR3Q9xXZGRywzn4x4mMFOU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

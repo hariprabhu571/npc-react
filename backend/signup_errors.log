@@ -1,0 +1,9 @@
+[2025-06-25 06:49:46] Raw input: {"customer_name":"fgg","mobile_number":"9840553297","password":"1234567"}
+[2025-06-25 06:49:46] Parsed input: Array
+(
+    [customer_name] => fgg
+    [mobile_number] => 9840553297
+    [password] => 1234567
+)
+
+[2025-06-25 06:49:46] Exception occurred: Duplicate entry '' for key 'email_id'

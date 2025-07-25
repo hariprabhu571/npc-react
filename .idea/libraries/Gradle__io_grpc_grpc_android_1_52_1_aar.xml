@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: io.grpc:grpc-android:1.52.1@aar" type="AndroidModuleLibraryType">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/c438b1adc71bb659ff68d05d154f5d46/transformed/jetified-grpc-android-1.52.1/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/c438b1adc71bb659ff68d05d154f5d46/transformed/jetified-grpc-android-1.52.1/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
