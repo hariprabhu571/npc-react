@@ -14,6 +14,7 @@ import ServiceDetails from './pages/ServiceDetails';
 import BookingHistory from './pages/BookingHistory';
 import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
+import OffersManagement from './pages/OffersManagement';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route Component
@@ -195,6 +196,21 @@ const AppContent = () => {
                 exit={{ opacity: 0 }}
               >
                 <ProfilePage />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/offers" 
+          element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <OffersManagement />
               </motion.div>
             </ProtectedRoute>
           } 

@@ -241,7 +241,7 @@ const UserDashboard: React.FC = () => {
                       >
                         <div className="h-48 bg-gradient-to-br from-orange-400 to-red-500 rounded-t-lg flex items-center justify-center relative">
                           <div className="absolute top-4 right-4 bg-white text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
-                            {offer.discount_percentage}% OFF
+                            {offer.offer_percentage}% OFF
                           </div>
                           <FiStar className="w-16 h-16 text-white" />
                         </div>
@@ -250,11 +250,11 @@ const UserDashboard: React.FC = () => {
                             {offer.offer_name}
                           </h3>
                           <p className="text-gray-600 text-sm mb-4">
-                            {offer.description}
+                            Use coupon code: {offer.coupon_number}
                           </p>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-500">
-                              Valid until {new Date(offer.valid_until).toLocaleDateString()}
+                              Valid until {new Date(offer.expires_on).toLocaleDateString()}
                             </span>
                             <button className="text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center">
                               View Details

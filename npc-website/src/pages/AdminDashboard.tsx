@@ -10,7 +10,9 @@ import {
   FiSearch,
   FiList,
   FiGrid,
-  FiTable
+  FiTable,
+  FiTag,
+  FiImage
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Booking, Employee, ContactQuery as BaseContactQuery } from '../types';
@@ -1078,6 +1080,14 @@ const AdminDashboard: React.FC = () => {
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [employeeStatus, setEmployeeStatus] = useState('all');
   const [employeeView, setEmployeeView] = useState<'table' | 'card' | 'list'>('table');
+
+  // Offers search, filter, and view state
+  const [offerSearch, setOfferSearch] = useState('');
+  const [offerStatus, setOfferStatus] = useState('all');
+  const [offerView, setOfferView] = useState<'table' | 'card' | 'list'>('table');
+  const [showAddOffer, setShowAddOffer] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<any>(null);
+  const [selectedBannerPreview, setSelectedBannerPreview] = useState<string | null>(null);
   
   // Add Employee state
   const [showAddEmployee, setShowAddEmployee] = useState(false);
@@ -1365,6 +1375,56 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Offer-related functions
+  const handleAddOffer = async (offerData: any) => {
+    try {
+      const response = await apiService.post(API_ENDPOINTS.ADD_OFFER, offerData);
+      if (response.status === 'success') {
+        const isUpdate = !!offerData.offer_id;
+        toast.success(isUpdate ? 'Offer updated successfully' : 'Offer added successfully');
+        setShowAddOffer(false);
+        setEditingOffer(null);
+        setSelectedBannerPreview(null);
+        // Refetch offers data
+        window.location.reload();
+      } else {
+        toast.error(response.message || 'Failed to add offer');
+      }
+    } catch (error: any) {
+      console.error('Add offer error:', error);
+      toast.error('Failed to add offer');
+    }
+  };
+
+  const handleDeleteOffer = async (offerId: string) => {
+    if (window.confirm('Are you sure you want to delete this offer?')) {
+      try {
+        const response = await apiService.delete(`${API_ENDPOINTS.DELETE_OFFER}?offer_id=${offerId}`);
+        if (response.status === 'success') {
+          toast.success('Offer deleted successfully');
+          // Refetch offers data
+          window.location.reload();
+        } else {
+          toast.error(response.message || 'Failed to delete offer');
+        }
+      } catch (error: any) {
+        console.error('Delete offer error:', error);
+        toast.error('Failed to delete offer');
+      }
+    }
+  };
+
+  const getOfferStatus = (offer: any) => {
+    const currentDate = new Date();
+    const expiryDate = new Date(offer.expires_on);
+    return expiryDate >= currentDate ? 'Active' : 'Expired';
+  };
+
+  const getOfferStatusColor = (offer: any) => {
+    const status = getOfferStatus(offer);
+    return status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  };
+
   // Fetch data
   const { data: bookingsData, isLoading: bookingsLoading, refetch: refetchBookings } = useQuery(
     'admin-bookings',
@@ -1431,6 +1491,26 @@ const AdminDashboard: React.FC = () => {
   const queriesDataAny = queriesData as any;
   const queries = queriesDataAny?.queries || queriesDataAny?.data?.queries || [];
 
+  // Offers data processing
+  const offersDataAny = offersData as any;
+  const offers = offersDataAny?.offers || [];
+
+  // Filter offers based on search and status
+  const filteredOffers = offers.filter((offer: any) => {
+    const matchesSearch = offer.offer_name?.toLowerCase().includes(offerSearch.toLowerCase()) ||
+                         offer.coupon_number?.toLowerCase().includes(offerSearch.toLowerCase());
+    
+    const currentDate = new Date();
+    const expiryDate = new Date(offer.expires_on);
+    const isActive = expiryDate >= currentDate;
+    
+    const matchesStatus = offerStatus === 'all' || 
+                         (offerStatus === 'active' && isActive) ||
+                         (offerStatus === 'expired' && !isActive);
+    
+    return matchesSearch && matchesStatus;
+  });
+
   // Stats
   const totalBookings = bookings.length;
   const pendingBookings = bookings.filter(b => b.booking_status === 'pending').length;
@@ -1471,6 +1551,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'bookings', label: 'Bookings', icon: FiCalendar },
     { id: 'employees', label: 'Employees', icon: FiUsers },
     { id: 'services', label: 'Services', icon: FiSettings },
+    { id: 'offers', label: 'Offers', icon: FiTag },
     { id: 'queries', label: 'Contact Queries', icon: FiSettings },
   ];
 
@@ -1500,6 +1581,13 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
+  // Helper to get full image URL for offers
+  const getOfferImageUrl = (imagePath?: string | null): string | undefined => {
+    if (!imagePath) return undefined;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) return imagePath;
+    return `${API_BASE_URL.replace(/\/$/, '')}/${imagePath.replace(/^\/+/, '')}`;
+  };
+
 
 
   // Main render
@@ -1522,6 +1610,7 @@ const AdminDashboard: React.FC = () => {
             { id: 'bookings', label: 'Bookings', icon: FiCalendar },
             { id: 'employees', label: 'Employees', icon: FiUsers },
             { id: 'services', label: 'Services', icon: FiSettings },
+            { id: 'offers', label: 'Offers', icon: FiTag },
             { id: 'queries', label: 'Contact Queries', icon: FiSettings }
           ].map((tab) => (
             <button
@@ -1570,6 +1659,9 @@ const AdminDashboard: React.FC = () => {
             )}
             {activeTab === 'services' && (
               <h2 className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">Services</h2>
+            )}
+            {activeTab === 'offers' && (
+              <h2 className="text-3xl font-semibold text-gray-900 mb-1 tracking-tight">Offers</h2>
             )}
 
           </div>
@@ -2039,6 +2131,243 @@ const AdminDashboard: React.FC = () => {
                                 onClick={() => handleResetPassword(employee)}
                               >
                                 Reset Password
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'offers' && (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                {/* Offers Controls: Search, Filter, View Toggle */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50 mb-2">
+                  {/* Left: Search Bar */}
+                  <div className="relative w-full sm:w-[32rem] mb-2 sm:mb-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <FiSearch className="w-5 h-5" />
+                    </span>
+                    <input
+                      type="text"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm placeholder-gray-400"
+                      placeholder="Search offers..."
+                      value={offerSearch}
+                      onChange={e => setOfferSearch(e.target.value)}
+                    />
+                  </div>
+                  {/* Right: Filter, View Toggle, and Add Offer Button */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="offerStatus" className="text-sm text-gray-500 font-medium hidden sm:block">Status:</label>
+                      <select
+                        id="offerStatus"
+                        className="w-full sm:w-44 px-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-white"
+                        value={offerStatus}
+                        onChange={e => setOfferStatus(e.target.value)}
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="expired">Expired</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className={`p-2 rounded-lg border ${offerView === 'table' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="Table View"
+                        onClick={() => setOfferView('table')}
+                      >
+                        <FiTable className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg border ${offerView === 'card' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="Card View"
+                        onClick={() => setOfferView('card')}
+                      >
+                        <FiGrid className="w-5 h-5" />
+                      </button>
+                      <button
+                        className={`p-2 rounded-lg border ${offerView === 'list' ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title="List View"
+                        onClick={() => setOfferView('list')}
+                      >
+                        <FiList className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors" onClick={() => setShowAddOffer(true)}>
+                      Add Offer
+                    </button>
+                  </div>
+                </div>
+                {offersLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Table View */}
+                    {offerView === 'table' && (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Banner</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offer Name</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredOffers.map((offer: any) => (
+                              <tr key={offer.offer_id}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {offer.offer_banner_location ? (
+                                    <img 
+                                      src={getOfferImageUrl(offer.offer_banner_location)} 
+                                      alt={`${offer.offer_name} banner`}
+                                      className="w-16 h-12 object-cover rounded-lg border border-gray-200"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-16 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                                      <FiImage className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">{offer.offer_name}</div>
+                                  <div className="text-sm text-gray-500">ID: {offer.offer_id}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {offer.coupon_number}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {offer.offer_percentage}%
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {formatDate(offer.expires_on)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOfferStatusColor(offer)}`}>
+                                    {getOfferStatus(offer)}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex space-x-2">
+                                    <button
+                                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded font-semibold text-xs transition"
+                                      onClick={() => setEditingOffer(offer)}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded font-semibold text-xs transition"
+                                      onClick={() => handleDeleteOffer(offer.offer_id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {/* Card View */}
+                    {offerView === 'card' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
+                        {filteredOffers.map((offer: any) => (
+                          <div key={offer.offer_id} className="bg-white rounded-xl shadow p-5 flex flex-col gap-2 border border-gray-100">
+                            {/* Banner Image */}
+                            {offer.offer_banner_location && (
+                              <div className="mb-3">
+                                <img 
+                                  src={getOfferImageUrl(offer.offer_banner_location)} 
+                                  alt={`${offer.offer_name} banner`}
+                                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-gray-900 text-base">{offer.offer_name}</span>
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getOfferStatusColor(offer)}`}>
+                                {getOfferStatus(offer)}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mb-1">ID: {offer.offer_id}</div>
+                            <div className="font-medium text-gray-700">{offer.coupon_number}</div>
+                            <div className="text-gray-500 text-sm">{offer.offer_percentage}% off</div>
+                            <div className="text-xs text-gray-400 mt-1">Expires: {formatDate(offer.expires_on)}</div>
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => setEditingOffer(offer)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleDeleteOffer(offer.offer_id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* List View */}
+                    {offerView === 'list' && (
+                      <div className="divide-y divide-gray-100 bg-white rounded-xl shadow p-2">
+                        {filteredOffers.map((offer: any) => (
+                          <div key={offer.offer_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 px-2">
+                            {/* Banner Image */}
+                            {offer.offer_banner_location && (
+                              <div className="flex-shrink-0 mr-3">
+                                <img 
+                                  src={getOfferImageUrl(offer.offer_banner_location)} 
+                                  alt={`${offer.offer_name} banner`}
+                                  className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 text-sm truncate">{offer.offer_name}</div>
+                              <div className="text-xs text-gray-500 truncate">ID: {offer.offer_id}</div>
+                              <div className="text-xs text-gray-700 truncate">{offer.coupon_number}</div>
+                              <div className="text-xs text-gray-400">{offer.offer_percentage}% off</div>
+                              <div className="text-xs text-gray-900">Expires: {formatDate(offer.expires_on)}</div>
+                            </div>
+                            <div className="flex gap-2 mt-2 sm:mt-0">
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getOfferStatusColor(offer)}`}>
+                                {getOfferStatus(offer)}
+                              </span>
+                              <button
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => setEditingOffer(offer)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition"
+                                onClick={() => handleDeleteOffer(offer.offer_id)}
+                              >
+                                Delete
                               </button>
                             </div>
                           </div>
@@ -2920,6 +3249,47 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Banner Image Upload */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FiImage className="w-5 h-5 mr-2 text-teal-600" />
+                        Banner Image
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        {/* Current Image Preview */}
+                        {editingOffer?.offer_banner_location && (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Current Banner:</label>
+                            <img 
+                              src={getOfferImageUrl(editingOffer.offer_banner_location)} 
+                              alt="Current banner"
+                              className="w-32 h-24 object-cover rounded-lg border border-gray-200"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* File Upload */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Upload New Banner Image
+                          </label>
+                          <input
+                            type="file"
+                            name="offer_banner"
+                            accept="image/*"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Upload an image for the offer banner (optional)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                       <button
@@ -2946,6 +3316,329 @@ const AdminDashboard: React.FC = () => {
                         ) : (
                           'Add Employee'
                         )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </Modal>
+            )}
+
+            {/* Add/Edit Offer Modal */}
+            {(showAddOffer || editingOffer) && (
+              <Modal onClose={() => { 
+                setShowAddOffer(false); 
+                setEditingOffer(null); 
+                setSelectedBannerPreview(null);
+              }}>
+                <div className="max-w-2xl mx-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {editingOffer ? 'Edit Offer' : 'Add New Offer'}
+                    </h2>
+                    <button
+                      onClick={() => { 
+                        setShowAddOffer(false); 
+                        setEditingOffer(null); 
+                        setSelectedBannerPreview(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    
+                    // Get the base64 image data from the hidden input
+                    const base64Image = formData.get('offer_banner_base64') as string;
+                    
+                    // Handle banner image logic
+                    let offer_banner = base64Image;
+                    
+                    // For new offers, require an image
+                    if (!editingOffer && !base64Image) {
+                      toast.error('Please upload a banner image');
+                      return;
+                    }
+                    
+                    // For editing offers
+                    if (editingOffer) {
+                      // If there's a new image selected, use it
+                      if (base64Image) {
+                        offer_banner = base64Image;
+                      } else {
+                        // If no new image and current banner was deleted (set to null), send empty string
+                        if (editingOffer.offer_banner_location === null) {
+                          offer_banner = '';
+                        } else if (editingOffer.offer_banner_location) {
+                          // If current banner exists and no new image, require a new upload or deletion
+                          toast.error('Please either upload a new banner image or delete the current one');
+                          return;
+                        }
+                      }
+                    }
+                    
+                    const offerData: any = {
+                      offer_name: formData.get('offer_name') as string,
+                      coupon_number: formData.get('coupon_number') as string,
+                      offer_starts_on: formData.get('offer_starts_on') as string,
+                      expires_on: formData.get('expires_on') as string,
+                      offer_percentage: parseInt(formData.get('offer_percentage') as string),
+                      offer_banner: offer_banner
+                    };
+                    
+                    // Add offer_id if editing
+                    if (editingOffer) {
+                      offerData.offer_id = editingOffer.offer_id;
+                    }
+                    
+                    await handleAddOffer(offerData);
+                    setSelectedBannerPreview(null);
+                  }} className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FiTag className="w-5 h-5 mr-2 text-teal-600" />
+                        Offer Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Offer Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="offer_name"
+                            required
+                            defaultValue={editingOffer?.offer_name || ''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter offer name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Coupon Number *
+                          </label>
+                          <input
+                            type="text"
+                            name="coupon_number"
+                            required
+                            defaultValue={editingOffer?.coupon_number || ''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter coupon number"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Discount Percentage *
+                          </label>
+                          <input
+                            type="number"
+                            name="offer_percentage"
+                            required
+                            min="1"
+                            max="100"
+                            defaultValue={editingOffer?.offer_percentage || ''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter discount percentage"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Date Information */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FiCalendar className="w-5 h-5 mr-2 text-teal-600" />
+                        Date Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Start Date *
+                          </label>
+                          <input
+                            type="date"
+                            name="offer_starts_on"
+                            required
+                            defaultValue={editingOffer?.offer_starts_on || ''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Expiry Date *
+                          </label>
+                          <input
+                            type="date"
+                            name="expires_on"
+                            required
+                            defaultValue={editingOffer?.expires_on || ''}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Banner Image */}
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FiImage className="w-5 h-5 mr-2 text-teal-600" />
+                        Banner Image
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        {/* Current Banner Preview (when editing) */}
+                        {editingOffer?.offer_banner_location && !selectedBannerPreview && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Current Banner
+                            </label>
+                            <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+                              <img
+                                src={getOfferImageUrl(editingOffer.offer_banner_location)}
+                                alt="Current banner"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // Remove the current banner by setting it to null
+                                  setEditingOffer({
+                                    ...editingOffer,
+                                    offer_banner_location: null
+                                  });
+                                }}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                                title="Delete current banner"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Selected Image Preview (when adding new or updating) */}
+                        {selectedBannerPreview && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Selected Image Preview
+                            </label>
+                            <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+                              <img
+                                src={selectedBannerPreview}
+                                alt="Selected banner preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedBannerPreview(null);
+                                  // Clear the hidden input
+                                  const hiddenInput = document.querySelector('input[name="offer_banner_base64"]');
+                                  if (hiddenInput) {
+                                    hiddenInput.remove();
+                                  }
+                                  // Clear the file input
+                                  const fileInput = document.querySelector('input[name="offer_banner"]') as HTMLInputElement;
+                                  if (fileInput) {
+                                    fileInput.value = '';
+                                  }
+                                }}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                                title="Delete selected image"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* File Upload (only show when no image is present) */}
+                        {!selectedBannerPreview && (!editingOffer?.offer_banner_location || editingOffer?.offer_banner_location === null) && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {editingOffer ? 'Upload Banner Image' : 'Upload Banner Image *'}
+                            </label>
+                            <input
+                              type="file"
+                              name="offer_banner"
+                              accept="image/*"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  // Check file size (2MB limit)
+                                  if (file.size > 2 * 1024 * 1024) {
+                                    toast.error('File size must be less than 2MB');
+                                    e.target.value = '';
+                                    setSelectedBannerPreview(null);
+                                    return;
+                                  }
+                                  
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    const base64 = event.target?.result as string;
+                                    setSelectedBannerPreview(base64);
+                                    
+                                    // Remove existing hidden input if any
+                                    const existingHidden = e.target.parentElement?.querySelector('input[name="offer_banner_base64"]');
+                                    if (existingHidden) {
+                                      existingHidden.remove();
+                                    }
+                                    
+                                    // Create new hidden input with base64 data
+                                    const hiddenInput = document.createElement('input');
+                                    hiddenInput.type = 'hidden';
+                                    hiddenInput.name = 'offer_banner_base64';
+                                    hiddenInput.value = base64.split(',')[1]; // Remove data:image/...;base64, prefix
+                                    e.target.parentElement?.appendChild(hiddenInput);
+                                  };
+                                  reader.readAsDataURL(file);
+                                } else {
+                                  setSelectedBannerPreview(null);
+                                }
+                              }}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">
+                              Recommended size: 800x400 pixels. Max file size: 2MB.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => { 
+                          setShowAddOffer(false); 
+                          setEditingOffer(null); 
+                          setSelectedBannerPreview(null);
+                        }}
+                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                      >
+                        {editingOffer ? 'Update Offer' : 'Add Offer'}
                       </button>
                     </div>
                   </form>
