@@ -18,7 +18,6 @@ export const API_ENDPOINTS = {
   ADD_PRICING_FIELD: 'add_pricing_field.php',
   UPDATE_PRICING_FIELD: 'update_pricing_field.php',
   DELETE_PRICING_FIELD: 'delete-pricing-field.php',
-  UPLOAD_SERVICE_IMAGE: 'upload_service_image.php',
 
   // Bookings
   CREATE_BOOKING: 'book_service_v2.php',

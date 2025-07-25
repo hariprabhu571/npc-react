@@ -107,20 +107,47 @@ const Modal: React.FC<{ onClose: () => void; children: React.ReactNode; size?: '
 // Add Service Modal component
 const ServiceModal: React.FC<{
   onClose: () => void;
-  onSave: (service: any, imageFile?: File | null) => void;
+  onSave: (service: any) => void;
   initialData?: any;
 }> = ({ onClose, onSave, initialData }) => {
+  // Helper to get full image URL
+  function getImageUrl(imagePath?: string | null): string | undefined {
+    if (!imagePath) return undefined;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) return imagePath;
+    return `${API_BASE_URL.replace(/\/$/, '')}/${imagePath.replace(/^\/+/, '')}`;
+  }
   // Service meta fields
   const [serviceName, setServiceName] = useState(initialData?.service_name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [locations, setLocations] = useState(initialData?.locations || []);
+  
+  // Service types and pricing
+  const [serviceTypes, setServiceTypes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
+
+  const [showEditDetails, setShowEditDetails] = useState(false);
+  const [showAddService, setShowAddService] = useState(false);
+
+  // For editing details
+  const [editName, setEditName] = useState(serviceName);
+  const [editDescription, setEditDescription] = useState(description);
+  const [editLocations, setEditLocations] = useState(locations);
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
-  const isAddMode = !initialData;
+
+  // For adding new service
+  const [addName, setAddName] = useState('');
+  const [addDescription, setAddDescription] = useState('');
+  const [addLocations, setAddLocations] = useState('');
+  const [addImage, setAddImage] = useState<File | null>(null);
+  const [addImagePreview, setAddImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     setServiceName(initialData?.service_name || '');
     setDescription(initialData?.description || '');
+    
+    // Handle locations - could be JSON string or array
     let locationsData = [];
     if (initialData?.locations) {
       try {
@@ -131,141 +158,866 @@ const ServiceModal: React.FC<{
       }
     }
     setLocations(locationsData);
-    if (initialData?.image_path) {
-      setEditImagePreview(`${API_BASE_URL}${initialData.image_path}`);
-    } else {
-      setEditImagePreview(null);
-    }
-    setEditImage(null);
+
+      // Load service types if editing
+  if (initialData) {
+    loadServiceTypes();
+  }
   }, [initialData]);
 
-  // Save handler for both add and edit
-  const handleSave = async () => {
+  const loadServiceTypes = async () => {
+    if (!initialData?.service_name) return;
+    
+    setIsLoading(true);
     try {
-      // Prepare FormData for image upload
-      const formData = new FormData();
-      if (editImage) {
-        formData.append('service_image', editImage);
-      }
-      if (!isAddMode) {
-        formData.append('service_id', initialData?.service_id || '');
-      }
-      formData.append('service_name', serviceName);
-      formData.append('description', description);
-      formData.append('locations', Array.isArray(locations) ? JSON.stringify(locations) : locations);
-      formData.append('action', isAddMode ? 'add_service' : 'update_service');
-
-      // Use the same endpoint as the app - services_manager.php
-      const response = await api.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.status === 'success') {
-        alert(isAddMode ? 'Service added successfully!' : 'Service details updated successfully!');
-        onSave({
-          service_name: serviceName,
-          description,
-          locations: Array.isArray(locations) ? JSON.stringify(locations) : locations,
-          image_path: response.data.image_path || (editImage ? `ServiceImages/${editImage.name}` : initialData?.image_path)
-        }, editImage);
+      const res = await apiService.get(`${API_ENDPOINTS.GET_SERVICE_DETAILS}?service_name=${encodeURIComponent(initialData.service_name)}`);
+      if (res.status === 'success' && res.data && Array.isArray(res.data)) {
+        // Mark existing service types and fields as not new
+        const processedData = res.data.map((type: any) => ({
+          ...type,
+          isNew: false,
+          pricing_fields: type.pricing_fields.map((field: any) => ({
+            ...field,
+            isNew: false,
+            isModified: false
+          }))
+        }));
+        setServiceTypes(processedData);
+        // Expand all types by default
+        const typeNames = processedData.map((type: any) => type.service_type_name).filter(Boolean);
+        setExpandedTypes(new Set(typeNames));
       } else {
-        alert('Failed to save service. Please try again.');
+        setServiceTypes([]);
       }
     } catch (error) {
+      console.error('Failed to load service types:', error);
+      setServiceTypes([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addServiceType = () => {
+    const newType = {
+      service_type_name: '',
+      pricing_fields: [{ room_size: '', price: '', isNew: true }],
+      isNew: true
+    };
+    setServiceTypes([...serviceTypes, newType]);
+    setExpandedTypes(prev => new Set(Array.from(prev).concat('new')));
+  };
+
+  const updateServiceType = (index: number, field: string, value: any) => {
+    const updated = [...serviceTypes];
+    updated[index] = { ...updated[index], [field]: value };
+    setServiceTypes(updated);
+  };
+
+  const addPricingField = (typeIndex: number) => {
+    const updated = [...serviceTypes];
+    updated[typeIndex].pricing_fields.push({ room_size: '', price: '', isNew: true });
+    setServiceTypes(updated);
+  };
+
+  const updatePricingField = (typeIndex: number, fieldIndex: number, field: string, value: string) => {
+    const updated = [...serviceTypes];
+    const currentField = updated[typeIndex].pricing_fields[fieldIndex];
+    updated[typeIndex].pricing_fields[fieldIndex] = {
+      ...currentField,
+      [field]: value,
+      isModified: !currentField.isNew // Mark as modified if it's not a new field
+    };
+    setServiceTypes(updated);
+  };
+
+  const removePricingField = (typeIndex: number, fieldIndex: number) => {
+    const updated = [...serviceTypes];
+    if (updated[typeIndex].pricing_fields.length > 1) {
+      updated[typeIndex].pricing_fields.splice(fieldIndex, 1);
+      setServiceTypes(updated);
+    }
+  };
+
+  const removeServiceType = async (typeIndex: number) => {
+    const serviceType = serviceTypes[typeIndex];
+    
+    // If it's an existing service type (not new), delete it from backend
+    if (!serviceType.isNew && serviceType.service_type_id) {
+      try {
+        await apiService.post(API_ENDPOINTS.DELETE_SERVICE_TYPE, {
+          service_type_id: serviceType.service_type_id
+        });
+      } catch (error) {
+        console.error('Failed to delete service type:', error);
+        // Still remove from UI even if backend delete fails
+      }
+    }
+    
+    // Remove from UI
+    const updated = serviceTypes.filter((_, index) => index !== typeIndex);
+    setServiceTypes(updated);
+  };
+
+  const toggleTypeExpansion = (typeName: string) => {
+    const updated = new Set(expandedTypes);
+    if (updated.has(typeName)) {
+      updated.delete(typeName);
+    } else {
+      updated.add(typeName);
+    }
+    setExpandedTypes(updated);
+  };
+
+  // Calculate summary statistics
+  const totalFields = serviceTypes.reduce((sum: number, type: any) => sum + type.pricing_fields.length, 0);
+  const avgPrice = totalFields > 0 
+    ? serviceTypes.reduce((sum: number, type: any) => 
+        sum + type.pricing_fields.reduce((typeSum: number, field: any) => 
+          typeSum + (parseFloat(field.price) || 0), 0), 0) / totalFields
+    : 0;
+
+  // Save handler
+  const handleSave = async () => {
+    try {
+      // First save the service details
+      await onSave({
+        service_name: serviceName,
+        description,
+        locations: Array.isArray(locations) ? JSON.stringify(locations) : locations
+      });
+
+      // Then save service types and pricing using individual API calls like the app
+      if (serviceTypes.length > 0) {
+        for (const serviceType of serviceTypes) {
+          if (serviceType.isNew) {
+            // Add new service type with all its pricing fields
+            const response = await apiService.post(API_ENDPOINTS.ADD_SERVICE_TYPE, {
+              service_name: serviceName,
+              service_type_name: serviceType.service_type_name,
+              pricing: serviceType.pricing_fields.map((field: any) => ({
+                room_size: field.room_size,
+                price: field.price
+              }))
+            });
+            
+            if (response.status === 'success') {
+              console.log('Service type added successfully:', serviceType.service_type_name);
+            } else {
+              console.error('Failed to add service type:', response.message);
+            }
+          } else {
+            // For existing service types, update each pricing field individually
+            for (const field of serviceType.pricing_fields) {
+              if (field.isNew) {
+                // Add new pricing field
+                const response = await apiService.post(API_ENDPOINTS.ADD_PRICING_FIELD, {
+                  service_name: serviceName,
+                  service_type_name: serviceType.service_type_name,
+                  room_size: field.room_size,
+                  price: field.price
+                });
+                
+                if (response.status === 'success') {
+                  console.log('Pricing field added successfully');
+                } else {
+                  console.error('Failed to add pricing field:', response.message);
+                }
+              } else if (field.isModified) {
+                // Update existing pricing field
+                const response = await apiService.post(API_ENDPOINTS.UPDATE_PRICING_FIELD, {
+                  service_type_id: field.id,
+                  room_size: field.room_size,
+                  price: field.price
+                });
+                
+                if (response.status === 'success') {
+                  console.log('Pricing field updated successfully');
+                } else {
+                  console.error('Failed to update pricing field:', response.message);
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Reload service types to get updated data from backend
+      await loadServiceTypes();
+      
+      // Show success message
+      alert('Service updated successfully!');
+      
+    } catch (error) {
+      console.error('Save error:', error);
       alert('Failed to save service. Please try again.');
     }
   };
 
-  // Render only the Edit Service Details dialog for add mode, or as a dialog in edit mode
   return (
-    <div className="p-6 w-full">
-      <h3 className="text-lg font-semibold mb-4">{isAddMode ? 'Add Service' : 'Edit Service Details'}</h3>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
-        <input
-          type="text"
-          className="w-full border border-gray-300 rounded px-3 py-2"
-          value={serviceName}
-          onChange={e => setServiceName(e.target.value)}
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          className="w-full border border-gray-300 rounded px-3 py-2"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
-        <input
-          type="text"
-          className="w-full border border-gray-300 rounded px-3 py-2"
-          value={Array.isArray(locations) ? locations.join(', ') : locations}
-          onChange={e => setLocations(e.target.value.split(',').map(s => s.trim()))}
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setEditImage(file);
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    setEditImagePreview(e.target?.result as string);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
-          </div>
-          {editImagePreview && (
-            <div className="relative w-16 h-16 border border-gray-300 rounded overflow-hidden">
-              <img 
-                src={editImagePreview} 
-                alt="Preview" 
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                onClick={() => {
-                  setEditImagePreview(null);
-                  setEditImage(null);
-                }}
-              >
-                ×
-              </button>
+    <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+              </svg>
             </div>
-          )}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Edit Service: {serviceName}
+              </h2>
+              <p className="text-sm text-gray-500">Manage service types and pricing structure</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors"
+              onClick={() => {
+                setEditName(serviceName);
+                setEditDescription(description);
+                setEditLocations(locations);
+                // Initialize image preview if there's an existing image
+                if (initialData?.image_path) {
+                  const imageUrl = getImageUrl(initialData.image_path);
+                  setEditImagePreview(imageUrl || null);
+                } else {
+                  setEditImagePreview(null);
+                }
+                setEditImage(null);
+                setShowEditDetails(true);
+              }}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Details
+            </button>
+            <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
+
+                 {/* Edit Details Modal */}
+         {showEditDetails && (
+           <Modal onClose={() => setShowEditDetails(false)} size="small">
+             <div className="p-6 w-full">
+              <h3 className="text-lg font-semibold mb-4">Edit Service Details</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={Array.isArray(editLocations) ? editLocations.join(', ') : editLocations}
+                  onChange={e => setEditLocations(e.target.value.split(',').map(s => s.trim()))}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setEditImage(file);
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            setEditImagePreview(e.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </div>
+                  {editImagePreview && (
+                    <div className="relative w-16 h-16 border border-gray-300 rounded overflow-hidden">
+                      <img 
+                        src={editImagePreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        onClick={() => {
+                          setEditImagePreview(null);
+                          setEditImage(null);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-700"
+                  onClick={() => setShowEditDetails(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-500 text-white"
+                  onClick={async () => {
+                    // Handle image upload if a new image is selected
+                    let imagePath = null;
+                    if (editImage) {
+                      try {
+                        const formData = new FormData();
+                        formData.append('service_image', editImage); // Use 'service_image' field name like the app
+                        formData.append('service_id', initialData?.service_id || '');
+                        formData.append('service_name', editName);
+                        formData.append('description', editDescription);
+                        formData.append('locations', Array.isArray(editLocations) ? JSON.stringify(editLocations) : editLocations);
+                        formData.append('action', 'update_service');
+                        
+                        // Use the same endpoint as the app - services_manager.php
+                        const response = await api.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData, {
+                          headers: {
+                            'Content-Type': 'multipart/form-data',
+                          },
+                        });
+                        
+                        if (response.data.status === 'success') {
+                          console.log('Service updated successfully with image');
+                          // The image path will be returned in the response or we can construct it
+                          imagePath = response.data.image_path || `/ServiceImages/${editImage.name}`;
+                        } else {
+                          console.error('Failed to update service:', response.data.message);
+                          alert('Failed to update service. Please try again.');
+                          return;
+                        }
+                      } catch (error) {
+                        console.error('Failed to update service:', error);
+                        alert('Failed to update service. Please try again.');
+                        return;
+                      }
+                    }
+                    
+                    // If no image was selected, still update the service details
+                    if (!editImage) {
+                      try {
+                        const updateData = {
+                          action: 'update_service',
+                          service_id: initialData?.service_id || '',
+                          service_name: editName,
+                          description: editDescription,
+                          locations: Array.isArray(editLocations) ? JSON.stringify(editLocations) : editLocations
+                        };
+                        
+                        const response = await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, updateData);
+                        
+                        if (response.status === 'success') {
+                          console.log('Service details updated successfully');
+                        } else {
+                          console.error('Failed to update service details:', response.message);
+                          alert('Failed to update service details. Please try again.');
+                          return;
+                        }
+                      } catch (error) {
+                        console.error('Failed to update service details:', error);
+                        alert('Failed to update service details. Please try again.');
+                        return;
+                      }
+                    }
+                    
+                    setServiceName(editName);
+                    setDescription(editDescription);
+                    setLocations(editLocations);
+                    setShowEditDetails(false);
+                    
+                    // Update the service with image path if uploaded
+                    if (imagePath) {
+                      console.log('Service image updated:', imagePath);
+                    }
+                    
+                    // Clear image states
+                    setEditImage(null);
+                    setEditImagePreview(null);
+                    
+                    // Show success message
+                    alert('Service details updated successfully!');
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* Add Service Modal */}
+        {showAddService && (
+          <Modal onClose={() => setShowAddService(false)} size="small">
+            <div className="p-6 w-full">
+              <h3 className="text-lg font-semibold mb-4">Add New Service</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={addName}
+                  onChange={e => setAddName(e.target.value)}
+                  placeholder="Enter service name"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={addDescription}
+                  onChange={e => setAddDescription(e.target.value)}
+                  placeholder="Enter service description"
+                  rows={3}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={addLocations}
+                  onChange={e => setAddLocations(e.target.value)}
+                  placeholder="e.g., Chennai, Coimbatore, Erode"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAddImage(file);
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            setAddImagePreview(e.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </div>
+                  {addImagePreview && (
+                    <div className="relative w-16 h-16 border border-gray-300 rounded overflow-hidden">
+                      <img 
+                        src={addImagePreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        onClick={() => {
+                          setAddImagePreview(null);
+                          setAddImage(null);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-700"
+                  onClick={() => setShowAddService(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-500 text-white"
+                  onClick={async () => {
+                    if (!addName.trim()) {
+                      alert('Please enter a service name');
+                      return;
+                    }
+
+                    try {
+                      const formData = new FormData();
+                      formData.append('service_name', addName);
+                      formData.append('description', addDescription);
+                      formData.append('locations', addLocations ? JSON.stringify(addLocations.split(',').map(s => s.trim())) : '[]');
+                      
+                      if (addImage) {
+                        formData.append('service_image', addImage);
+                      }
+
+                      const response = await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData);
+                      
+                      if (response.status === 'success') {
+                        alert('Service added successfully!');
+                        setShowAddService(false);
+                        // Reset form
+                        setAddName('');
+                        setAddDescription('');
+                        setAddLocations('');
+                        setAddImage(null);
+                        setAddImagePreview(null);
+                        // Refresh services list
+                        if (onSave) {
+                          onSave({
+                            service_name: addName,
+                            description: addDescription,
+                            locations: addLocations.split(',').map(s => s.trim())
+                          });
+                        }
+                      } else {
+                        alert('Failed to add service. Please try again.');
+                      }
+                    } catch (error) {
+                      console.error('Failed to add service:', error);
+                      alert('Failed to add service. Please try again.');
+                    }
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        <div className="flex">
+          {/* Main Content */}
+          <div className="flex-1 p-6">
+            {/* Service Overview */}
+            <div className="mb-6">
+              <div className="flex items-center mb-3">
+                <svg className="w-5 h-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900">Service Overview</h3>
+                <span className="ml-auto bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {serviceTypes.length} Service Types
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="text-sm text-gray-500">Service Name</div>
+                  <div className="font-medium text-gray-900">{serviceName || 'Not set'}</div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="text-sm text-gray-500">Total Pricing Fields</div>
+                  <div className="font-medium text-gray-900">{totalFields}</div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="text-sm text-gray-500">Image</div>
+                  <div className="flex items-center">
+                    {initialData?.image_path ? (
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 border border-gray-300 rounded overflow-hidden mr-2">
+                          <img 
+                            src={getImageUrl(initialData.image_path)} 
+                            alt="Service" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <span className="font-medium text-gray-900">Uploaded</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center mr-2">
+                          <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-500">No image</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="text-sm text-gray-500">Status</div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    <span className="font-medium text-gray-900">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Service Types & Pricing */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900">Service Types & Pricing</h3>
+                </div>
+                <button 
+                  onClick={addServiceType}
+                  className="btn btn-primary text-sm"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Service Type
+                </button>
+              </div>
+
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {serviceTypes.map((type, typeIndex) => (
+                    <div key={typeIndex} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                      {/* Service Type Header */}
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => toggleTypeExpansion(type.service_type_name)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          {/* Drag Handle */}
+                          <div className="w-5 h-5 text-gray-400 cursor-move">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zm6-8a2 2 0 1 1-.001-4.001A2 2 0 0 1 13 6zm0 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z" />
+                            </svg>
+                          </div>
+                          
+                          {/* Service Type Icon */}
+                          <div className="w-6 h-6 bg-teal-100 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 2L3 7v11h14V7l-7-5zM10 4.5L15 8v9H5V8l5-3.5z"/>
+                            </svg>
+                          </div>
+                          
+                          <div className="flex-1">
+                            <input 
+                              type="text"
+                              value={type.service_type_name}
+                              onChange={(e) => updateServiceType(typeIndex, 'service_type_name', e.target.value)}
+                              className="font-semibold text-gray-900 bg-transparent border-none focus:ring-0 p-0"
+                              placeholder="Enter service type name"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <div className="text-sm text-gray-500">
+                              {type.pricing_fields.length} pricing fields
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addPricingField(typeIndex);
+                            }}
+                            className="text-teal-600 hover:text-teal-700"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeServiceType(typeIndex);
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleTypeExpansion(type.service_type_name);
+                            }}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <svg className={`w-5 h-5 transform transition-transform ${expandedTypes.has(type.service_type_name) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Pricing Structure */}
+                      {expandedTypes.has(type.service_type_name) && (
+                        <div className="border-t border-gray-200 bg-gray-50">
+                          <div className="p-4">
+                            <div className="flex items-center mb-3">
+                              <svg className="w-4 h-4 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                              </svg>
+                              <h4 className="font-medium text-gray-900">Pricing Structure</h4>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {type.pricing_fields.map((field: any, fieldIndex: number) => (
+                                <div key={fieldIndex} className="bg-white border border-gray-200 rounded-lg p-4">
+                                  <div className="flex items-center space-x-4">
+                                    <div className="flex-1">
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Room Size</label>
+                                      <input
+                                        type="text"
+                                        value={field.room_size}
+                                        onChange={(e) => updatePricingField(typeIndex, fieldIndex, 'room_size', e.target.value)}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                        placeholder="e.g., 1 BHK"
+                                      />
+                                    </div>
+                                    <div className="flex-1">
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                                      <input
+                                        type="number"
+                                        value={field.price}
+                                        onChange={(e) => updatePricingField(typeIndex, fieldIndex, 'price', e.target.value)}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
+                                    <div className="flex items-end">
+                                      <button
+                                        onClick={() => removePricingField(typeIndex, fieldIndex)}
+                                        className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
+                                        disabled={type.pricing_fields.length <= 1}
+                                      >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <button
+                              onClick={() => addPricingField(typeIndex)}
+                              className="mt-4 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors bg-white"
+                            >
+                              <div className="flex items-center justify-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span className="font-medium">Add Pricing Field</span>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions & Summary Sidebar */}
+          <div className="w-96 bg-gray-50 border-l border-gray-200 p-6">
+            <div className="space-y-6">
+              {/* Summary */}
+              <div>
+                <div className="flex items-center mb-3">
+                  <svg className="w-5 h-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                  </svg>
+                  <h3 className="font-medium text-gray-900">Actions & Summary</h3>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 space-y-3">
+                  <h4 className="font-semibold text-gray-900">Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Service Types:</span>
+                      <span className="font-medium">{serviceTypes.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Total Fields:</span>
+                      <span className="font-medium">{totalFields}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Avg Price:</span>
+                      <span className="font-medium">₹{avgPrice.toFixed(0)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                <div className="space-y-2">
+                  <button 
+                    onClick={addServiceType}
+                    className="w-full text-left text-teal-600 hover:text-teal-700 text-sm flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Service Type
+                  </button>
+                  <button className="w-full text-left text-blue-600 hover:text-blue-700 text-sm flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Duplicate Type
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button 
+                  onClick={handleSave}
+                  className="w-full btn btn-primary flex items-center justify-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  Save Changes
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="w-full text-gray-600 hover:text-gray-800 text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="flex justify-end gap-2">
-        <button
-          className="px-4 py-2 rounded bg-gray-200 text-gray-700"
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-4 py-2 rounded bg-blue-500 text-white"
-          onClick={handleSave}
-        >
-          Save
-        </button>
-      </div>
-    </div>
   );
 };
 
@@ -303,6 +1055,7 @@ const AdminDashboard: React.FC = () => {
   const [serviceToDelete, setServiceToDelete] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
+  const [showAddService, setShowAddService] = useState(false);
   const fetchServices = async () => {
     setServicesLoading(true);
     try {
@@ -572,6 +1325,8 @@ const AdminDashboard: React.FC = () => {
       day: '2-digit',
     });
   };
+
+
 
   // Main render
   return (
@@ -1208,7 +1963,7 @@ const AdminDashboard: React.FC = () => {
                       }).length} with locations • {services.filter((service: any) => service.image_path).length} with images
                     </p>
                   </div>
-                  <button className="btn btn-primary text-sm" onClick={() => setActiveServiceModal('add')}>Add Service</button>
+                  <button className="btn btn-primary text-sm" onClick={() => setShowAddService(true)}>Add Service</button>
                 </div>
                 {servicesLoading ? (
                   <div className="flex justify-center py-12">
@@ -1256,6 +2011,70 @@ const AdminDashboard: React.FC = () => {
             {activeServiceModal === 'edit' && (
               <Modal onClose={() => { setActiveServiceModal(null); setEditingService(null); }}>
                 <ServiceModal onClose={() => { setActiveServiceModal(null); setEditingService(null); }} onSave={handleEditService} initialData={editingService} />
+              </Modal>
+            )}
+
+            {/* Add Service Modal */}
+            {showAddService && (
+              <Modal onClose={() => setShowAddService(false)} size="small">
+                <div className="p-6 w-full">
+                  <h3 className="text-lg font-semibold mb-4">Add New Service</h3>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      placeholder="Enter service name"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      placeholder="Enter service description"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      placeholder="e.g., Chennai, Coimbatore, Erode"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="px-4 py-2 rounded bg-gray-200 text-gray-700"
+                      onClick={() => setShowAddService(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 rounded bg-blue-500 text-white"
+                      onClick={() => {
+                        // TODO: Implement add service functionality
+                        alert('Add service functionality will be implemented');
+                        setShowAddService(false);
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
               </Modal>
             )}
                 {/* Delete Confirmation */}
@@ -1397,4 +2216,4 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;
