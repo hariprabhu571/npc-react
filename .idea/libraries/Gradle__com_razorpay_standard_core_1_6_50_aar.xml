@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: com.razorpay:standard-core:1.6.50@aar" type="AndroidModuleLibraryType">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/1886a817a36dfaf7bbd2184c30238970/transformed/jetified-standard-core-1.6.50/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/1886a817a36dfaf7bbd2184c30238970/transformed/jetified-standard-core-1.6.50/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
