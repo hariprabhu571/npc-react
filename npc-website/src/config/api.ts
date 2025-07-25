@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   ADD_TECHNICIAN: 'add_technician.php',
   ADMIN_ORDERS: 'admin_orders.php',
   ASSIGN_TECHNICIAN: 'assign_technicians.php',
+  RESET_PASSWORD: 'reset_password.php',
 };
 
 export function getApiUrl(endpoint: string) {
