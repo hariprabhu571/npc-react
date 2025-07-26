@@ -1088,6 +1088,7 @@ const AdminDashboard: React.FC = () => {
   const [showAddOffer, setShowAddOffer] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [selectedBannerPreview, setSelectedBannerPreview] = useState<string | null>(null);
+  const [selectedBannerBase64, setSelectedBannerBase64] = useState<string>('');
   
   // Add Employee state
   const [showAddEmployee, setShowAddEmployee] = useState(false);
@@ -1385,6 +1386,7 @@ const AdminDashboard: React.FC = () => {
         setShowAddOffer(false);
         setEditingOffer(null);
         setSelectedBannerPreview(null);
+        setSelectedBannerBase64('');
         // Refetch offers data
         window.location.reload();
       } else {
@@ -1583,7 +1585,7 @@ const AdminDashboard: React.FC = () => {
 
   // Helper to get full image URL for offers
   const getOfferImageUrl = (imagePath?: string | null): string | undefined => {
-    if (!imagePath) return undefined;
+    if (!imagePath || imagePath === 'no-banner') return undefined;
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) return imagePath;
     return `${API_BASE_URL.replace(/\/$/, '')}/${imagePath.replace(/^\/+/, '')}`;
   };
@@ -2244,13 +2246,12 @@ const AdminDashboard: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="text-sm font-medium text-gray-900">{offer.offer_name}</div>
-                                  <div className="text-sm text-gray-500">ID: {offer.offer_id}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {offer.coupon_number}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {offer.offer_percentage}%
+                                  {Math.round(offer.offer_percentage)}%
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {formatDate(offer.expires_on)}
@@ -2306,9 +2307,9 @@ const AdminDashboard: React.FC = () => {
                                 {getOfferStatus(offer)}
                               </span>
                             </div>
-                            <div className="text-xs text-gray-500 mb-1">ID: {offer.offer_id}</div>
+
                             <div className="font-medium text-gray-700">{offer.coupon_number}</div>
-                            <div className="text-gray-500 text-sm">{offer.offer_percentage}% off</div>
+                            <div className="text-gray-500 text-sm">{Math.round(offer.offer_percentage)}% off</div>
                             <div className="text-xs text-gray-400 mt-1">Expires: {formatDate(offer.expires_on)}</div>
                             <div className="flex gap-2 mt-3">
                               <button
@@ -2348,9 +2349,9 @@ const AdminDashboard: React.FC = () => {
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 text-sm truncate">{offer.offer_name}</div>
-                              <div className="text-xs text-gray-500 truncate">ID: {offer.offer_id}</div>
+
                               <div className="text-xs text-gray-700 truncate">{offer.coupon_number}</div>
-                              <div className="text-xs text-gray-400">{offer.offer_percentage}% off</div>
+                              <div className="text-xs text-gray-400">{Math.round(offer.offer_percentage)}% off</div>
                               <div className="text-xs text-gray-900">Expires: {formatDate(offer.expires_on)}</div>
                             </div>
                             <div className="flex gap-2 mt-2 sm:mt-0">
@@ -3329,38 +3330,24 @@ const AdminDashboard: React.FC = () => {
                 setShowAddOffer(false); 
                 setEditingOffer(null); 
                 setSelectedBannerPreview(null);
+                setSelectedBannerBase64('');
               }}>
                 <div className="max-w-2xl mx-auto">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">
                       {editingOffer ? 'Edit Offer' : 'Add New Offer'}
                     </h2>
-                    <button
-                      onClick={() => { 
-                        setShowAddOffer(false); 
-                        setEditingOffer(null); 
-                        setSelectedBannerPreview(null);
-                      }}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
                   </div>
 
                   <form onSubmit={async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
                     
-                    // Get the base64 image data from the hidden input
-                    const base64Image = formData.get('offer_banner_base64') as string;
-                    
                     // Handle banner image logic
-                    let offer_banner = base64Image;
+                    let offer_banner: string = '';
                     
                     // For new offers, require an image
-                    if (!editingOffer && !base64Image) {
+                    if (!editingOffer && !selectedBannerBase64) {
                       toast.error('Please upload a banner image');
                       return;
                     }
@@ -3368,18 +3355,21 @@ const AdminDashboard: React.FC = () => {
                     // For editing offers
                     if (editingOffer) {
                       // If there's a new image selected, use it
-                      if (base64Image) {
-                        offer_banner = base64Image;
+                      if (selectedBannerBase64) {
+                        offer_banner = selectedBannerBase64;
                       } else {
-                        // If no new image and current banner was deleted (set to null), send empty string
-                        if (editingOffer.offer_banner_location === null) {
-                          offer_banner = '';
-                        } else if (editingOffer.offer_banner_location) {
-                          // If current banner exists and no new image, require a new upload or deletion
-                          toast.error('Please either upload a new banner image or delete the current one');
-                          return;
+                        // If no new image and current banner was deleted (set to special marker), send a special marker
+                        if (editingOffer.offer_banner_location === 'DELETE_BANNER') {
+                          offer_banner = 'DELETE_BANNER'; // Special marker to indicate deletion
+                        } else {
+                          // If current banner exists and no new image selected, don't include banner field
+                          // This means the backend will keep the existing banner
+                          offer_banner = ''; // Empty string means no change
                         }
                       }
+                    } else {
+                      // For new offers, use the base64 image
+                      offer_banner = selectedBannerBase64;
                     }
                     
                     const offerData: any = {
@@ -3387,17 +3377,25 @@ const AdminDashboard: React.FC = () => {
                       coupon_number: formData.get('coupon_number') as string,
                       offer_starts_on: formData.get('offer_starts_on') as string,
                       expires_on: formData.get('expires_on') as string,
-                      offer_percentage: parseInt(formData.get('offer_percentage') as string),
-                      offer_banner: offer_banner
+                      offer_percentage: parseInt(formData.get('offer_percentage') as string)
                     };
+                    
+                    // Always include banner field, but use special markers
+                    offerData.offer_banner = offer_banner;
                     
                     // Add offer_id if editing
                     if (editingOffer) {
                       offerData.offer_id = editingOffer.offer_id;
                     }
                     
-                    await handleAddOffer(offerData);
-                    setSelectedBannerPreview(null);
+                    try {
+                      await handleAddOffer(offerData);
+                      setSelectedBannerPreview(null);
+                      setSelectedBannerBase64('');
+                    } catch (error) {
+                      console.error('Error saving offer:', error);
+                      toast.error('Failed to save offer. Please try again.');
+                    }
                   }} className="space-y-6">
                     {/* Basic Information */}
                     <div className="bg-gray-50 rounded-lg p-6">
@@ -3423,7 +3421,7 @@ const AdminDashboard: React.FC = () => {
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Coupon Number *
+                            Coupon Code *
                           </label>
                           <input
                             type="text"
@@ -3431,7 +3429,7 @@ const AdminDashboard: React.FC = () => {
                             required
                             defaultValue={editingOffer?.coupon_number || ''}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                            placeholder="Enter coupon number"
+                            placeholder="Enter coupon code"
                           />
                         </div>
                         
@@ -3498,7 +3496,7 @@ const AdminDashboard: React.FC = () => {
                       
                       <div className="space-y-4">
                         {/* Current Banner Preview (when editing) */}
-                        {editingOffer?.offer_banner_location && !selectedBannerPreview && (
+                        {editingOffer?.offer_banner_location && editingOffer?.offer_banner_location !== 'DELETE_BANNER' && !selectedBannerPreview && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Current Banner
@@ -3516,10 +3514,10 @@ const AdminDashboard: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  // Remove the current banner by setting it to null
+                                  // Remove the current banner by setting it to a special marker
                                   setEditingOffer({
                                     ...editingOffer,
-                                    offer_banner_location: null
+                                    offer_banner_location: 'DELETE_BANNER'
                                   });
                                 }}
                                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
@@ -3547,11 +3545,7 @@ const AdminDashboard: React.FC = () => {
                                 type="button"
                                 onClick={() => {
                                   setSelectedBannerPreview(null);
-                                  // Clear the hidden input
-                                  const hiddenInput = document.querySelector('input[name="offer_banner_base64"]');
-                                  if (hiddenInput) {
-                                    hiddenInput.remove();
-                                  }
+                                  setSelectedBannerBase64('');
                                   // Clear the file input
                                   const fileInput = document.querySelector('input[name="offer_banner"]') as HTMLInputElement;
                                   if (fileInput) {
@@ -3568,7 +3562,7 @@ const AdminDashboard: React.FC = () => {
                         )}
                         
                         {/* File Upload (only show when no image is present) */}
-                        {!selectedBannerPreview && (!editingOffer?.offer_banner_location || editingOffer?.offer_banner_location === null) && (
+                        {!selectedBannerPreview && (!editingOffer?.offer_banner_location || editingOffer?.offer_banner_location === 'DELETE_BANNER') && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               {editingOffer ? 'Upload Banner Image' : 'Upload Banner Image *'}
@@ -3586,6 +3580,7 @@ const AdminDashboard: React.FC = () => {
                                     toast.error('File size must be less than 2MB');
                                     e.target.value = '';
                                     setSelectedBannerPreview(null);
+                                    setSelectedBannerBase64('');
                                     return;
                                   }
                                   
@@ -3593,23 +3588,12 @@ const AdminDashboard: React.FC = () => {
                                   reader.onload = (event) => {
                                     const base64 = event.target?.result as string;
                                     setSelectedBannerPreview(base64);
-                                    
-                                    // Remove existing hidden input if any
-                                    const existingHidden = e.target.parentElement?.querySelector('input[name="offer_banner_base64"]');
-                                    if (existingHidden) {
-                                      existingHidden.remove();
-                                    }
-                                    
-                                    // Create new hidden input with base64 data
-                                    const hiddenInput = document.createElement('input');
-                                    hiddenInput.type = 'hidden';
-                                    hiddenInput.name = 'offer_banner_base64';
-                                    hiddenInput.value = base64.split(',')[1]; // Remove data:image/...;base64, prefix
-                                    e.target.parentElement?.appendChild(hiddenInput);
+                                    setSelectedBannerBase64(base64.split(',')[1]); // Remove data:image/...;base64, prefix
                                   };
                                   reader.readAsDataURL(file);
                                 } else {
                                   setSelectedBannerPreview(null);
+                                  setSelectedBannerBase64('');
                                 }
                               }}
                             />
@@ -3629,6 +3613,7 @@ const AdminDashboard: React.FC = () => {
                           setShowAddOffer(false); 
                           setEditingOffer(null); 
                           setSelectedBannerPreview(null);
+                          setSelectedBannerBase64('');
                         }}
                         className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                       >

@@ -43,10 +43,23 @@ if (empty($sessionId) || !validateSession($conn, $sessionId)) {
 // Get the raw POST data (JSON)
 $data = json_decode(file_get_contents("php://input"), true);
 
+// Debug logging
+error_log("Add offers request data: " . print_r($data, true));
+error_log("Session ID: " . $sessionId);
+
+
+
 // Check if this is an update operation
 $isUpdate = isset($data['offer_id']) && !empty($data['offer_id']);
 
 // Validate input fields
+error_log("Validating input fields...");
+error_log("offer_name: " . (isset($data['offer_name']) ? $data['offer_name'] : 'NOT SET'));
+error_log("coupon_number: " . (isset($data['coupon_number']) ? $data['coupon_number'] : 'NOT SET'));
+error_log("offer_starts_on: " . (isset($data['offer_starts_on']) ? $data['offer_starts_on'] : 'NOT SET'));
+error_log("expires_on: " . (isset($data['expires_on']) ? $data['expires_on'] : 'NOT SET'));
+error_log("offer_percentage: " . (isset($data['offer_percentage']) ? $data['offer_percentage'] : 'NOT SET'));
+
 if (
     isset($data['offer_name'], $data['coupon_number'], $data['offer_starts_on'], $data['expires_on'], $data['offer_percentage'])
 ) {
@@ -57,13 +70,17 @@ if (
     $offer_percentage = $data['offer_percentage'];
     $offer_banner_base64 = isset($data['offer_banner']) ? $data['offer_banner'] : '';
 
-    $file_path = null;
+    $file_path = 'no-banner'; // Default for new offers
 
     if ($isUpdate) {
         $offer_id = $data['offer_id'];
         
-        // For updates, get the current banner location if no new banner is provided
-        if (empty($offer_banner_base64)) {
+        // For updates, handle banner logic
+        if ($offer_banner_base64 === 'DELETE_BANNER') {
+            // User wants to delete the banner, set to a placeholder value
+            $file_path = 'no-banner';
+        } else if (empty($offer_banner_base64)) {
+            // No new banner provided, keep existing banner
             $stmt = $conn->prepare("SELECT offer_banner_location FROM offers WHERE offer_id = ?");
             $stmt->bind_param("s", $offer_id);
             $stmt->execute();
@@ -114,12 +131,15 @@ if (
         $stmt->bind_param("ssssis", $offer_name, $coupon_number, $offer_starts_on, $expires_on, $offer_percentage, $file_path);
     }
 
+    error_log("Executing database operation...");
     if ($stmt->execute()) {
+        error_log("Database operation successful");
         echo json_encode([
             "status" => "success",
             "message" => $isUpdate ? "Offer updated successfully" : "Offer added successfully"
         ]);
     } else {
+        error_log("Database operation failed: " . $stmt->error);
         echo json_encode([
             "status" => "error",
             "message" => $isUpdate ? "Failed to update offer" : "Failed to add offer",
