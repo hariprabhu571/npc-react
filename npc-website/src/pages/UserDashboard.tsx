@@ -241,7 +241,7 @@ const UserDashboard: React.FC = () => {
                       >
                         <div className="h-48 bg-gradient-to-br from-orange-400 to-red-500 rounded-t-lg flex items-center justify-center relative">
                           <div className="absolute top-4 right-4 bg-white text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
-                            {offer.offer_percentage}% OFF
+                            {Math.round(offer.offer_percentage)}% OFF
                           </div>
                           <FiStar className="w-16 h-16 text-white" />
                         </div>
