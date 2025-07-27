@@ -17,7 +17,8 @@ import {
   FiShare2,
   FiX,
   FiCopy,
-  FiExternalLink
+  FiExternalLink,
+  FiShield as FiPrivacy
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service, Offer, ServicesResponse, OffersResponse } from '../types';
@@ -242,6 +243,7 @@ const UserDashboard: React.FC = () => {
     { icon: FiCalendar, label: 'Bookings', onClick: () => navigate('/bookings') },
     { icon: FiBell, label: 'Notifications', onClick: () => navigate('/notifications') },
     { icon: FiShare2, label: 'Share', onClick: () => setShowShareModal(true) },
+    { icon: FiPrivacy, label: 'Privacy Policy', onClick: () => navigate('/privacy-policy') },
     { icon: FiUser, label: 'Profile', onClick: () => navigate('/profile') },
   ];
 

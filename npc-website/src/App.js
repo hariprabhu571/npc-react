@@ -15,6 +15,7 @@ import BookingHistory from './pages/BookingHistory';
 import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
 import ChangePassword from './pages/ChangePassword';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import OffersManagement from './pages/OffersManagement';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -212,6 +213,21 @@ const AppContent = () => {
                 exit={{ opacity: 0 }}
               >
                 <ChangePassword />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/privacy-policy" 
+          element={
+            <ProtectedRoute>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <PrivacyPolicy />
               </motion.div>
             </ProtectedRoute>
           } 
