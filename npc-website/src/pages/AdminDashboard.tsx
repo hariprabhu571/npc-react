@@ -472,15 +472,14 @@ const ServiceModal: React.FC<{
                     // If no image was selected, still update the service details
                     if (!editImage) {
                       try {
-                        const updateData = {
-                          action: 'update_service',
-                          service_id: initialData?.service_id || '',
-                          service_name: editName,
-                          description: editDescription,
-                          locations: Array.isArray(editLocations) ? JSON.stringify(editLocations) : editLocations
-                        };
+                        const formData = new FormData();
+                        formData.append('action', 'update_service');
+                        formData.append('service_id', initialData?.service_id || '');
+                        formData.append('service_name', editName);
+                        formData.append('description', editDescription);
+                        formData.append('locations', Array.isArray(editLocations) ? JSON.stringify(editLocations) : editLocations);
                         
-                        const response = await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, updateData);
+                        const response = await apiService.postFormData(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData);
                         
                         if (response.status === 'success') {
                           console.log('Service details updated successfully');
@@ -616,6 +615,7 @@ const ServiceModal: React.FC<{
 
                     try {
                       const formData = new FormData();
+                      formData.append('action', 'add_service');
                       formData.append('service_name', addName);
                       formData.append('description', addDescription);
                       formData.append('locations', addLocations ? JSON.stringify(addLocations.split(',').map(s => s.trim())) : '[]');
@@ -624,7 +624,7 @@ const ServiceModal: React.FC<{
                         formData.append('service_image', addImage);
                       }
 
-                      const response = await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData);
+                      const response = await apiService.postFormData(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData);
                       
                       if (response.status === 'success') {
                         alert('Service added successfully!');
@@ -936,12 +936,6 @@ const ServiceModal: React.FC<{
                     </svg>
                     Add Service Type
                   </button>
-                  <button className="w-full text-left text-blue-600 hover:text-blue-700 text-sm flex items-center">
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Duplicate Type
-                  </button>
                 </div>
               </div>
 
@@ -1109,7 +1103,7 @@ const AdminDashboard: React.FC = () => {
         })) || []
       })) || [];
 
-      await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, {
+      await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_TYPES, {
         service_name: service.service_name,
         service_types: serviceTypes
       });
@@ -1124,10 +1118,11 @@ const AdminDashboard: React.FC = () => {
   };
   const handleDeleteService = async () => {
     try {
-      await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, { 
-        action: 'delete_service',
-        service_id: serviceToDelete.service_id 
-      });
+      const formData = new FormData();
+      formData.append('action', 'delete_service');
+      formData.append('service_id', serviceToDelete.service_id);
+      
+      await apiService.postFormData(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, formData);
       toast.success('Service deleted');
       setServiceToDelete(null);
       fetchServices();

@@ -113,21 +113,29 @@ function fetchServices() {
 function addService() {
     global $conn, $data;
     
-    // Check if JSON data exists
-    if (!isset($data['service_name']) || !isset($data['description'])) {
+    // Check if data exists in either JSON or POST
+    $service_name = null;
+    $description = null;
+    $locations_json = '[]';
+    
+    // Try to get data from POST first (FormData), then from JSON
+    if (isset($_POST['service_name']) && isset($_POST['description'])) {
+        $service_name = trim($_POST['service_name']);
+        $description = trim($_POST['description']);
+        $locations_json = isset($_POST['locations']) ? $_POST['locations'] : '[]';
+    } elseif (isset($data['service_name']) && isset($data['description'])) {
+        $service_name = trim($data['service_name']);
+        $description = trim($data['description']);
+        $locations_json = isset($data['locations']) ? $data['locations'] : '[]';
+    } else {
         echo json_encode([
             "status" => "error",
             "message" => "Missing required fields"
         ]);
         return;
     }
-
-    $service_name = trim($data['service_name']);
-    $description = trim($data['description']);
+    
     $image_path = null;
-
-    // Handle locations (JSON format)
-    $locations_json = isset($data['locations']) ? $data['locations'] : '[]';
 
     // Validate inputs
     if (empty($service_name)) {
@@ -138,8 +146,15 @@ function addService() {
         return;
     }
 
-    // Handle base64 image if provided
-    if (isset($data['service_image']) && !empty($data['service_image'])) {
+    // Handle image upload if provided
+    if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] == 0) {
+        // Handle FormData image upload
+        $image_path = handleImageUpload($_FILES['service_image']);
+        if ($image_path === false) {
+            return; // Error already echoed in handleImageUpload
+        }
+    } elseif (isset($data['service_image']) && !empty($data['service_image'])) {
+        // Handle base64 image if provided (JSON)
         $image_path = handleBase64ImageUpload($data['service_image'], $service_name);
         if ($image_path === false) {
             return; // Error already echoed in handleBase64ImageUpload
