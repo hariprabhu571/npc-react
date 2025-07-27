@@ -159,22 +159,7 @@ const BookingHistory: React.FC = () => {
     });
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    try {
-      const response = await apiService.post(API_ENDPOINTS.CANCEL_BOOKING, {
-        booking_id: bookingId
-      });
 
-      if (response.status === 'success') {
-        toast.success('Booking cancelled successfully');
-        refetch();
-      } else {
-        toast.error(response.message || 'Failed to cancel booking');
-      }
-    } catch (error) {
-      toast.error('Failed to cancel booking');
-    }
-  };
 
   const filterOptions = [
     { value: 'all', label: 'All Bookings', count: allBookings.length },
@@ -283,21 +268,6 @@ const BookingHistory: React.FC = () => {
                   <option value="amount">Amount</option>
                   <option value="service">Service</option>
                 </select>
-                <button
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                  title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
-                >
-                  {sortOrder === 'asc' ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
-                </button>
               </div>
             </div>
 
@@ -373,8 +343,8 @@ const BookingHistory: React.FC = () => {
                             <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${getPaymentStatusColor(booking.payment_status)}`}>
                               Payment: {booking.payment_status}
                             </span>
-                            <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-md ${getStatusColor(booking.status)}`}>
-                              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(booking.status)}`}>
+                              Booking Status: {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                             </span>
                           </div>
                         </div>
@@ -471,14 +441,6 @@ const BookingHistory: React.FC = () => {
                     {/* Action Buttons */}
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <div className="flex space-x-3">
-                        {booking.status === 'pending' && (
-                          <button
-                            onClick={() => handleCancelBooking(booking.booking_id)}
-                            className="px-4 py-2 text-sm font-semibold text-red-600 border-2 border-red-300 rounded-xl hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-sm"
-                          >
-                            Cancel Booking
-                          </button>
-                        )}
                         <button
                           onClick={() => navigate(`/service/${encodeURIComponent(booking.service_name)}`)}
                           className="px-4 py-2 text-sm font-semibold text-teal-600 border-2 border-teal-300 rounded-xl hover:bg-teal-50 hover:border-teal-400 transition-all duration-200 shadow-sm"
@@ -653,17 +615,6 @@ const BookingHistory: React.FC = () => {
                 >
                   Close
                 </button>
-                {selectedBooking.status === 'pending' && (
-                  <button
-                    onClick={() => {
-                      setShowDetailsModal(false);
-                      handleCancelBooking(selectedBooking.booking_id);
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Cancel Booking
-                  </button>
-                )}
               </div>
             </div>
           </div>

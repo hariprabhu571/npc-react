@@ -35,7 +35,7 @@ export const API_ENDPOINTS = {
   DELETE_OFFER: 'delete_offers.php',
 
   // Profile
-  USER_PROFILE: 'user_profile.php',
+  USER_PROFILE: 'userupdate.php',
   GET_PROFILE: 'getprofile.php',
   GET_ADMIN_PROFILE: 'getadminprofile.php',
   GET_TECHNICIAN_PROFILE: 'gettechnicianprofile.php',

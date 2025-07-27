@@ -12,14 +12,68 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   String _searchQuery = "";
+  String _selectedLocation = "";
   bool _isLoading = false;
   bool _isLoadingOffers = false;
   List<Map<String, dynamic>> _services = [];
   List<Map<String, dynamic>> _offers = [];
+  List<String> _locationSuggestions = [];
+  bool _showLocationDropdown = false;
 
-  GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
+  GlobalKey<RefreshIndicatorState> _refreshKey =
+      GlobalKey<RefreshIndicatorState>();
   late TabController _tabController;
+
+  // Sample city suggestions (same as web app)
+  final List<String> _citySuggestions = [
+    'Chennai',
+    'Coimbatore',
+    'Erode',
+    'Salem',
+    'Mumbai',
+    'Delhi',
+    'Bangalore',
+    'Hyderabad',
+    'Kolkata',
+    'Pune',
+    'Ahmedabad',
+    'Jaipur',
+    'Surat',
+    'Lucknow',
+    'Kanpur',
+    'Nagpur',
+    'Indore',
+    'Thane',
+    'Bhopal',
+    'Visakhapatnam',
+    'Pimpri-Chinchwad',
+    'Patna',
+    'Vadodara',
+    'Ghaziabad',
+    'Ludhiana',
+    'Agra',
+    'Nashik',
+    'Faridabad',
+    'Meerut',
+    'Rajkot',
+    'Kalyan-Dombivali',
+    'Vasai-Virar',
+    'Varanasi',
+    'Srinagar',
+    'Aurangabad',
+    'Dhanbad',
+    'Amritsar',
+    'Allahabad',
+    'Ranchi',
+    'Howrah',
+    'Jabalpur',
+    'Gwalior',
+    'Vijayawada',
+    'Jodhpur',
+    'Madurai'
+  ];
 
   @override
   void initState() {
@@ -66,10 +120,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       final response = await http.get(
         Uri.parse(ip + "fetch_services.php"),
-        headers: {
-          'Session-ID': sessionId,
-          "Content-Type": "application/json"
-        },
+        headers: {'Session-ID': sessionId, "Content-Type": "application/json"},
       );
 
       print('Services response: ${response.statusCode}');
@@ -86,7 +137,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _showErrorSnackBar("Error: ${data['message']}");
         }
       } else {
-        _showErrorSnackBar("Failed to fetch services. Status code: ${response.statusCode}");
+        _showErrorSnackBar(
+            "Failed to fetch services. Status code: ${response.statusCode}");
       }
     } catch (e) {
       print('Services error: $e');
@@ -115,10 +167,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       final response = await http.get(
         Uri.parse(ip + "fetch_all_offers.php"),
-        headers: {
-          'Session-ID': sessionId,
-          "Content-Type": "application/json"
-        },
+        headers: {'Session-ID': sessionId, "Content-Type": "application/json"},
       );
 
       print('Offers response: ${response.statusCode}');
@@ -136,7 +185,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _showErrorSnackBar("Error: ${data['message']}");
         }
       } else {
-        _showErrorSnackBar("Failed to fetch offers. Status code: ${response.statusCode}");
+        _showErrorSnackBar(
+            "Failed to fetch offers. Status code: ${response.statusCode}");
       }
     } catch (e) {
       print('Offers error: $e');
@@ -158,11 +208,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message, style: TextStyle(fontSize: 14, fontFamily: 'Sora')),
+          content:
+              Text(message, style: TextStyle(fontSize: 14, fontFamily: 'Sora')),
           backgroundColor: Color(0xFFE53E3E),
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 6,
         ),
       );
@@ -178,13 +230,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     List<Map<String, dynamic>> filteredOffers = _offers;
 
     if (_searchQuery.isNotEmpty) {
-      filteredServices = _services.where((service) =>
-          service['service_name'].toString().toLowerCase().contains(_searchQuery)
-      ).toList();
+      filteredServices = _services
+          .where((service) => service['service_name']
+              .toString()
+              .toLowerCase()
+              .contains(_searchQuery))
+          .toList();
 
-      filteredOffers = _offers.where((offer) =>
-          offer['offer_name'].toString().toLowerCase().contains(_searchQuery)
-      ).toList();
+      filteredOffers = _offers
+          .where((offer) => offer['offer_name']
+              .toString()
+              .toLowerCase()
+              .contains(_searchQuery))
+          .toList();
     }
 
     return Scaffold(
@@ -246,7 +304,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
               children: [
-                Icon(Icons.pest_control, color: Colors.white, size: screenWidth * 0.07),
+                Icon(Icons.pest_control,
+                    color: Colors.white, size: screenWidth * 0.07),
                 SizedBox(width: 12),
                 Text(
                   "NPC",
@@ -294,16 +353,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fontSize: 16,
                 ),
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search, color: Color(0xFF6B7280), size: 22),
+                  prefixIcon:
+                      Icon(Icons.search, color: Color(0xFF6B7280), size: 22),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      _filterServices("");
-                      FocusScope.of(context).unfocus();
-                    },
-                    child: Icon(Icons.clear, color: Color(0xFF6B7280), size: 20),
-                  )
+                          onTap: () {
+                            _searchController.clear();
+                            _filterServices("");
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: Icon(Icons.clear,
+                              color: Color(0xFF6B7280), size: 20),
+                        )
                       : null,
                   hintText: "Search services or offers...",
                   hintStyle: TextStyle(
@@ -312,7 +373,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
                 onChanged: _filterServices,
               ),
@@ -327,7 +389,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Responsive sizing
     double fontSize = screenWidth < 350 ? 12 : (screenWidth < 400 ? 14 : 16);
     double iconSize = screenWidth < 350 ? 14 : (screenWidth < 400 ? 16 : 18);
-    double horizontalPadding = screenWidth < 350 ? 8 : (screenWidth < 400 ? 12 : 16);
+    double horizontalPadding =
+        screenWidth < 350 ? 8 : (screenWidth < 400 ? 12 : 16);
 
     return Container(
       color: Colors.white,
@@ -408,7 +471,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildServicesTab(List<Map<String, dynamic>> services, double screenWidth) {
+  Widget _buildServicesTab(
+      List<Map<String, dynamic>> services, double screenWidth) {
     if (_isLoading) {
       return Center(
         child: Column(
@@ -444,14 +508,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _searchQuery.isEmpty ? Icons.pest_control_outlined : Icons.search_off,
+                _searchQuery.isEmpty
+                    ? Icons.pest_control_outlined
+                    : Icons.search_off,
                 size: 64,
                 color: Color(0xFF94A3B8),
               ),
             ),
             SizedBox(height: 24),
             Text(
-              _searchQuery.isEmpty ? "No services available" : "No services match your search",
+              _searchQuery.isEmpty
+                  ? "No services available"
+                  : "No services match your search",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -492,7 +560,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildOffersTab(List<Map<String, dynamic>> offers, double screenWidth) {
+  Widget _buildOffersTab(
+      List<Map<String, dynamic>> offers, double screenWidth) {
     if (_isLoadingOffers) {
       return Center(
         child: Column(
@@ -535,7 +604,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             SizedBox(height: 24),
             Text(
-              _searchQuery.isEmpty ? "No offers available" : "No offers match your search",
+              _searchQuery.isEmpty
+                  ? "No offers available"
+                  : "No offers match your search",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -620,49 +691,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                   ),
-                  child: service['image_path'] != null && service['image_path'].toString().isNotEmpty
+                  child: service['image_path'] != null &&
+                          service['image_path'].toString().isNotEmpty
                       ? Image.network(
-                    ip + service['image_path'],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF0F766E).withOpacity(0.1),
-                              Color(0xFF065F46).withOpacity(0.05),
-                            ],
+                          ip + service['image_path'],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF0F766E).withOpacity(0.1),
+                                    Color(0xFF065F46).withOpacity(0.05),
+                                  ],
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.pest_control,
+                                size: 48,
+                                color: Color(0xFF0F766E).withOpacity(0.6),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF0F766E).withOpacity(0.1),
+                                Color(0xFF065F46).withOpacity(0.05),
+                              ],
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.pest_control,
+                            size: 48,
+                            color: Color(0xFF0F766E).withOpacity(0.6),
                           ),
                         ),
-                        child: Icon(
-                          Icons.pest_control,
-                          size: 48,
-                          color: Color(0xFF0F766E).withOpacity(0.6),
-                        ),
-                      );
-                    },
-                  )
-                      : Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF0F766E).withOpacity(0.1),
-                          Color(0xFF065F46).withOpacity(0.05),
-                        ],
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.pest_control,
-                      size: 48,
-                      color: Color(0xFF0F766E).withOpacity(0.6),
-                    ),
-                  ),
                 ),
               ),
 
@@ -688,7 +760,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       SizedBox(height: 4),
                       Expanded(
                         child: Text(
-                          service['description'] ?? "Professional service for your needs",
+                          service['description'] ??
+                              "Professional service for your needs",
                           style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFF6B7280),
@@ -743,13 +816,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final String offerName = offer['offer_name'] ?? "Special Offer";
     final String couponNumber = offer['coupon_number'] ?? "";
     final String expiresOn = offer['expires_on'] ?? "";
-    final String offerPercentage = offer['offer_percentage'] != null ? "${offer['offer_percentage']}%" : "";
+    final String offerPercentage = offer['offer_percentage'] != null
+        ? "${offer['offer_percentage']}%"
+        : "";
 
     String formattedExpiry = "";
     if (expiresOn.isNotEmpty) {
       try {
         final DateTime expiryDate = DateTime.parse(expiresOn);
-        formattedExpiry = "${expiryDate.day}/${expiryDate.month}/${expiryDate.year}";
+        formattedExpiry =
+            "${expiryDate.day}/${expiryDate.month}/${expiryDate.year}";
       } catch (e) {
         formattedExpiry = expiresOn;
       }
@@ -768,7 +844,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ],
         border: Border.all(
-          color: isActive ? Color(0xFF0F766E).withOpacity(0.2) : Color(0xFFE2E8F0),
+          color:
+              isActive ? Color(0xFF0F766E).withOpacity(0.2) : Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
@@ -816,7 +893,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           SizedBox(height: 4),
                           if (offerPercentage.isNotEmpty)
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: isActive
@@ -893,15 +971,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                         SizedBox(width: 8),
                       ],
-
                       if (formattedExpiry.isNotEmpty)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                           decoration: BoxDecoration(
-                            color: isActive ? Color(0xFFFEF3C7) : Color(0xFFFEE2E2),
+                            color: isActive
+                                ? Color(0xFFFEF3C7)
+                                : Color(0xFFFEE2E2),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isActive ? Color(0xFFFCD34D) : Color(0xFFFCA5A5),
+                              color: isActive
+                                  ? Color(0xFFFCD34D)
+                                  : Color(0xFFFCA5A5),
                               width: 1,
                             ),
                           ),
@@ -911,7 +993,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               Icon(
                                 Icons.schedule,
                                 size: 12,
-                                color: isActive ? Color(0xFFD97706) : Color(0xFFDC2626),
+                                color: isActive
+                                    ? Color(0xFFD97706)
+                                    : Color(0xFFDC2626),
                               ),
                               SizedBox(width: 4),
                               Text(
@@ -919,7 +1003,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontFamily: 'Sora',
-                                  color: isActive ? Color(0xFFD97706) : Color(0xFFDC2626),
+                                  color: isActive
+                                      ? Color(0xFFD97706)
+                                      : Color(0xFFDC2626),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -988,7 +1074,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isActive ? Color(0xFF10B981) : Color(0xFFEF4444)).withOpacity(0.3),
+                    color: (isActive ? Color(0xFF10B981) : Color(0xFFEF4444))
+                        .withOpacity(0.3),
                     blurRadius: 6,
                     offset: Offset(0, 2),
                   ),
@@ -1019,7 +1106,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
 
           // Banner image if available
-          if (offer['offer_banner_location'] != null && offer['offer_banner_location'].toString().isNotEmpty)
+          if (offer['offer_banner_location'] != null &&
+              offer['offer_banner_location'].toString().isNotEmpty)
             Positioned(
               top: 16,
               right: 60,

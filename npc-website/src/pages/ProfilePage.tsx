@@ -16,15 +16,25 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { UserProfileData } from '../types';
 import { apiService } from '../services/api';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 import { useQuery } from 'react-query';
 import toast from 'react-hot-toast';
+
+// Helper function to get full image URL
+const getImageUrl = (imagePath?: string): string | null => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+  return `${API_BASE_URL}${imagePath.replace(/^\/+/, '')}`;
+};
 
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     customer_name: user?.name || '',
     email_id: user?.email || '',
@@ -49,6 +59,21 @@ const ProfilePage: React.FC = () => {
 
   const profile = profileData?.data as UserProfileData;
 
+  // Update form data when profile is loaded
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        customer_name: profile.customer_name || user?.name || '',
+        email_id: profile.email_id || user?.email || '',
+        mobile_number: profile.mobile_number || user?.mobile || '',
+        address1: profile.address1 || '',
+        address2: profile.address2 || '',
+        gender: profile.gender || 'Male',
+        country: profile.country || 'India'
+      });
+    }
+  }, [profile, user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -60,7 +85,18 @@ const ProfilePage: React.FC = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await apiService.post(API_ENDPOINTS.USER_PROFILE, formData);
+      // Only send fields that the backend supports
+      const updateData = {
+        customer_name: formData.customer_name,
+        mobile_number: formData.mobile_number,
+        email_id: formData.email_id,
+        address1: formData.address1,
+        address2: formData.address2,
+        gender: formData.gender,
+        country: formData.country
+      };
+
+      const response = await apiService.post(API_ENDPOINTS.USER_PROFILE, updateData);
       
       if (response.status === 'success') {
         toast.success('Profile updated successfully');
@@ -83,6 +119,56 @@ const ProfilePage: React.FC = () => {
 
   const handleChangePassword = () => {
     navigate('/change-password');
+  };
+
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64String = e.target?.result as string;
+        // Remove the data:image/jpeg;base64, prefix
+        const base64Data = base64String.split(',')[1];
+
+        const response = await apiService.post('update_profile_picture.php', {
+          profile_pic: base64Data
+        });
+
+        if (response.status === 'success') {
+          toast.success('Profile picture updated successfully');
+          refetch(); // Refresh profile data
+        } else {
+          toast.error(response.message || 'Failed to update profile picture');
+        }
+        setIsUploadingImage(false);
+      };
+
+      reader.onerror = () => {
+        toast.error('Failed to read image file');
+        setIsUploadingImage(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Failed to update profile picture');
+      setIsUploadingImage(false);
+    }
   };
 
   if (profileLoading) {
@@ -141,20 +227,38 @@ const ProfilePage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="text-center">
                   <div className="relative inline-block">
-                    <div className="w-32 h-32 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {profile?.profile_pic ? (
+                    <div className="w-32 h-32 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                      {profile?.profile_pic && getImageUrl(profile.profile_pic) ? (
                         <img 
-                          src={profile.profile_pic} 
+                          src={getImageUrl(profile.profile_pic)!} 
                           alt="Profile" 
                           className="w-32 h-32 rounded-full object-cover"
+                          onError={(e) => {
+                            // Fallback to icon if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
+                      ) : null}
+                      <div className={`w-32 h-32 rounded-full flex items-center justify-center ${profile?.profile_pic ? 'hidden' : ''}`}>
                         <FiUser className="w-16 h-16 text-white" />
-                      )}
+                      </div>
                     </div>
-                    <button className="absolute bottom-2 right-2 w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center text-white hover:bg-teal-700 transition-colors">
+                    <label className="absolute bottom-2 right-2 w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center text-white hover:bg-teal-700 transition-colors cursor-pointer">
                       <FiCamera className="w-4 h-4" />
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                        disabled={isUploadingImage}
+                      />
+                    </label>
+                    {isUploadingImage && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {profile?.customer_name || user?.name}
@@ -207,7 +311,7 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FiUser className="inline w-4 h-4 mr-1" />
-                      Full Name
+                      Full Name *
                     </label>
                     {isEditing ? (
                       <input
@@ -216,6 +320,8 @@ const ProfilePage: React.FC = () => {
                         value={formData.customer_name}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        required
+                        placeholder="Enter your full name"
                       />
                     ) : (
                       <p className="text-gray-900">{profile?.customer_name || user?.name}</p>
@@ -230,11 +336,12 @@ const ProfilePage: React.FC = () => {
                     </label>
                     {isEditing ? (
                       <input
-                        type="text"
+                        type="email"
                         name="email_id"
                         value={formData.email_id}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        required
                       />
                     ) : (
                       <p className="text-gray-900">{profile?.email_id || user?.email}</p>
@@ -245,7 +352,7 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FiPhone className="inline w-4 h-4 mr-1" />
-                      Mobile Number
+                      Mobile Number *
                     </label>
                     {isEditing ? (
                       <input
@@ -254,9 +361,13 @@ const ProfilePage: React.FC = () => {
                         value={formData.mobile_number}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        required
+                        placeholder="Enter your mobile number"
+                        pattern="[0-9]{10}"
+                        title="Please enter a valid 10-digit mobile number"
                       />
                     ) : (
-                      <p className="text-gray-900">{profile?.mobile_number || user?.mobile}</p>
+                      <p className="text-gray-900">{profile?.mobile_number || user?.mobile || 'Not provided'}</p>
                     )}
                   </div>
 
@@ -264,7 +375,7 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <FiMapPin className="inline w-4 h-4 mr-1" />
-                      Address Line 1
+                      Address Line 1 *
                     </label>
                     {isEditing ? (
                       <input
@@ -273,6 +384,8 @@ const ProfilePage: React.FC = () => {
                         value={formData.address1}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        required
+                        placeholder="Enter your address"
                       />
                     ) : (
                       <p className="text-gray-900">{profile?.address1 || 'Not provided'}</p>

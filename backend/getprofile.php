@@ -51,6 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Get full user profile information
     $profileStmt = $conn->prepare(
         "SELECT 
+            customer_name,
+            mobile_number,
             email_id, 
             address1, 
             address2, 
