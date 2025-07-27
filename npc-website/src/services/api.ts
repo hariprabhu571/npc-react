@@ -64,6 +64,20 @@ export const apiService = {
     }
   },
 
+  // POST request with form data
+  postFormData: async <T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> => {
+    try {
+      const response = await api.post(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
   // PUT request
   put: async <T>(endpoint: string, data?: any): Promise<ApiResponse<T>> => {
     try {

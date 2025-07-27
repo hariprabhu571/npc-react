@@ -287,73 +287,13 @@ const ServiceModal: React.FC<{
   // Save handler
   const handleSave = async () => {
     try {
-      // First save the service details
+      // Save the service details with service types using the mobile app's approach
       await onSave({
         service_name: serviceName,
         description,
-        locations: Array.isArray(locations) ? JSON.stringify(locations) : locations
+        locations: Array.isArray(locations) ? JSON.stringify(locations) : locations,
+        serviceTypes: serviceTypes // Pass the service types data
       });
-
-      // Then save service types and pricing using individual API calls like the app
-      if (serviceTypes.length > 0) {
-        for (const serviceType of serviceTypes) {
-          if (serviceType.isNew) {
-            // Add new service type with all its pricing fields
-            const response = await apiService.post(API_ENDPOINTS.ADD_SERVICE_TYPE, {
-              service_name: serviceName,
-              service_type_name: serviceType.service_type_name,
-              pricing: serviceType.pricing_fields.map((field: any) => ({
-                room_size: field.room_size,
-                price: field.price
-              }))
-            });
-            
-            if (response.status === 'success') {
-              console.log('Service type added successfully:', serviceType.service_type_name);
-            } else {
-              console.error('Failed to add service type:', response.message);
-            }
-          } else {
-            // For existing service types, update each pricing field individually
-            for (const field of serviceType.pricing_fields) {
-              if (field.isNew) {
-                // Add new pricing field
-                const response = await apiService.post(API_ENDPOINTS.ADD_PRICING_FIELD, {
-                  service_name: serviceName,
-                  service_type_name: serviceType.service_type_name,
-                  room_size: field.room_size,
-                  price: field.price
-                });
-                
-                if (response.status === 'success') {
-                  console.log('Pricing field added successfully');
-                } else {
-                  console.error('Failed to add pricing field:', response.message);
-                }
-              } else if (field.isModified) {
-                // Update existing pricing field
-                const response = await apiService.post(API_ENDPOINTS.UPDATE_PRICING_FIELD, {
-                  service_type_id: field.id,
-                  room_size: field.room_size,
-                  price: field.price
-                });
-                
-                if (response.status === 'success') {
-                  console.log('Pricing field updated successfully');
-                } else {
-                  console.error('Failed to update pricing field:', response.message);
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      // Reload service types to get updated data from backend
-      await loadServiceTypes();
-      
-      // Show success message
-      alert('Service updated successfully!');
       
     } catch (error) {
       console.error('Save error:', error);
@@ -700,7 +640,8 @@ const ServiceModal: React.FC<{
                           onSave({
                             service_name: addName,
                             description: addDescription,
-                            locations: addLocations.split(',').map(s => s.trim())
+                            locations: addLocations.split(',').map(s => s.trim()),
+                            service_image: addImage
                           });
                         }
                       } else {
@@ -1136,12 +1077,19 @@ const AdminDashboard: React.FC = () => {
   });
   const handleAddService = async (service: any) => {
     try {
-      await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, {
-        action: 'add_service',
-        service_name: service.service_name,
-        description: service.description,
-        locations: service.locations
-      });
+      // Create FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('service_name', service.service_name);
+      formData.append('description', service.description);
+      formData.append('locations', JSON.stringify(service.locations || []));
+
+      // Add image file if provided
+      if (service.service_image) {
+        formData.append('service_image', service.service_image);
+      }
+
+      // Send request to add_service.php using FormData
+      await apiService.postFormData(API_ENDPOINTS.ADD_SERVICE, formData);
       toast.success('Service added');
       setActiveServiceModal(null);
       fetchServices();
@@ -1152,12 +1100,18 @@ const AdminDashboard: React.FC = () => {
   };
   const handleEditService = async (service: any) => {
     try {
+      // Transform the service data to match the mobile app's expected format
+      const serviceTypes = service.serviceTypes?.map((type: any) => ({
+        typeName: type.service_type_name,
+        pricingFields: type.pricing_fields?.map((field: any) => ({
+          roomSize: field.room_size,
+          price: parseFloat(field.price)
+        })) || []
+      })) || [];
+
       await apiService.post(API_ENDPOINTS.UPDATE_SERVICE_DETAILS, {
-        action: 'update_service',
-        service_id: editingService.service_id,
         service_name: service.service_name,
-        description: service.description,
-        locations: service.locations
+        service_types: serviceTypes
       });
       toast.success('Service updated');
       setActiveServiceModal(null);
@@ -2792,61 +2746,87 @@ const AdminDashboard: React.FC = () => {
               <Modal onClose={() => setShowAddService(false)} size="small">
                 <div className="p-6 w-full">
                   <h3 className="text-lg font-semibold mb-4">Add New Service</h3>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded px-3 py-2"
-                      placeholder="Enter service name"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea
-                      className="w-full border border-gray-300 rounded px-3 py-2"
-                      placeholder="Enter service description"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded px-3 py-2"
-                      placeholder="e.g., Chennai, Coimbatore, Erode"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="w-full border border-gray-300 rounded px-3 py-2"
-                        />
-                      </div>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    
+                    // Get the image file directly
+                    const imageFile = formData.get('service_image') as File;
+                    
+                    const serviceData = {
+                      service_name: formData.get('service_name') as string,
+                      description: formData.get('description') as string,
+                      locations: (formData.get('locations') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
+                      service_image: imageFile && imageFile.size > 0 ? imageFile : null
+                    };
+                    
+                    try {
+                      await handleAddService(serviceData);
+                      setShowAddService(false);
+                    } catch (error) {
+                      console.error('Error adding service:', error);
+                      toast.error('Failed to add service. Please try again.');
+                    }
+                  }}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
+                      <input
+                        type="text"
+                        name="service_name"
+                        required
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="Enter service name"
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      className="px-4 py-2 rounded bg-gray-200 text-gray-700"
-                      onClick={() => setShowAddService(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 rounded bg-blue-500 text-white"
-                      onClick={() => {
-                        // TODO: Implement add service functionality
-                        alert('Add service functionality will be implemented');
-                        setShowAddService(false);
-                      }}
-                    >
-                      Save
-                    </button>
-                  </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                      <textarea
+                        name="description"
+                        required
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="Enter service description"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Locations (comma separated)</label>
+                      <input
+                        type="text"
+                        name="locations"
+                        className="w-full border border-gray-300 rounded px-3 py-2"
+                        placeholder="e.g., Chennai, Coimbatore, Erode"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Service Image</label>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            name="service_image"
+                            accept="image/*"
+                            className="w-full border border-gray-300 rounded px-3 py-2"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Upload an image for this service (JPG, PNG, GIF)</p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded bg-gray-200 text-gray-700"
+                        onClick={() => setShowAddService(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded bg-blue-500 text-white"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </Modal>
             )}

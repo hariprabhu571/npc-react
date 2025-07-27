@@ -1,4 +1,5 @@
 <?php
+require_once 'conn.php';
 // user-bookings.php - Updated for your actual bookings table structure
 
 header("Access-Control-Allow-Origin: *");
@@ -12,12 +13,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once 'conn.php';
+
 
 // GET - Fetch user bookings by session ID
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && !isset($_GET['booking_id'])) {
     try {
-        $sessionId = isset($_GET['session_id']) ? trim($_GET['session_id']) : null;
+        $sessionId = null;
+if (isset($_GET['session_id'])) {
+    $sessionId = trim($_GET['session_id']);
+} elseif (isset($_SERVER['HTTP_SESSION_ID'])) {
+    $sessionId = trim($_SERVER['HTTP_SESSION_ID']);
+}
         
         if (!$sessionId) {
             http_response_code(400);
@@ -240,7 +246,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !isset($_GET['booking_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['booking_id'])) {
     try {
         $bookingId = $_GET['booking_id'];
-        $sessionId = isset($_GET['session_id']) ? trim($_GET['session_id']) : null;
+        $sessionId = null;
+if (isset($_GET['session_id'])) {
+    $sessionId = trim($_GET['session_id']);
+} elseif (isset($_SERVER['HTTP_SESSION_ID'])) {
+    $sessionId = trim($_SERVER['HTTP_SESSION_ID']);
+}
         
         if (!$sessionId || !$bookingId) {
             http_response_code(400);

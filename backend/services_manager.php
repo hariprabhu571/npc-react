@@ -28,8 +28,11 @@ if (empty($sessionId) || !validateSession($conn, $sessionId)) {
     exit;
 }
 
-// Get the action from POST data
-$action = isset($_POST['action']) ? $_POST['action'] : '';
+// Parse JSON input
+$data = json_decode(file_get_contents("php://input"), true);
+
+// Get the action from JSON data
+$action = isset($data['action']) ? $data['action'] : '';
 
 switch ($action) {
     case 'fetch_services':
@@ -108,10 +111,10 @@ function fetchServices() {
 }
 
 function addService() {
-    global $conn;
+    global $conn, $data;
     
-    // Check if form data exists
-    if (!isset($_POST['service_name']) || !isset($_POST['description'])) {
+    // Check if JSON data exists
+    if (!isset($data['service_name']) || !isset($data['description'])) {
         echo json_encode([
             "status" => "error",
             "message" => "Missing required fields"
@@ -119,12 +122,12 @@ function addService() {
         return;
     }
 
-    $service_name = trim($_POST['service_name']);
-    $description = trim($_POST['description']);
+    $service_name = trim($data['service_name']);
+    $description = trim($data['description']);
     $image_path = null;
 
     // Handle locations (JSON format)
-    $locations_json = isset($_POST['locations']) ? $_POST['locations'] : '[]';
+    $locations_json = isset($data['locations']) ? $data['locations'] : '[]';
 
     // Validate inputs
     if (empty($service_name)) {
@@ -135,11 +138,11 @@ function addService() {
         return;
     }
 
-    // Handle image upload if an image was provided
-    if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] == 0) {
-        $image_path = handleImageUpload($_FILES['service_image']);
+    // Handle base64 image if provided
+    if (isset($data['service_image']) && !empty($data['service_image'])) {
+        $image_path = handleBase64ImageUpload($data['service_image'], $service_name);
         if ($image_path === false) {
-            return; // Error already echoed in handleImageUpload
+            return; // Error already echoed in handleBase64ImageUpload
         }
     }
 
@@ -470,6 +473,43 @@ function handleImageUpload($file) {
         echo json_encode([
             "status" => "error",
             "message" => "Failed to upload image."
+        ]);
+        return false;
+    }
+}
+
+function handleBase64ImageUpload($base64Data, $serviceName) {
+    $upload_dir = 'ServiceImages/';
+    if (!file_exists($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+    
+    $filename = 'service_' . time() . '_' . uniqid() . '.jpg';
+    $target_path = $upload_dir . $filename;
+    
+    $image_data = base64_decode($base64Data);
+    if ($image_data === false) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Invalid base64 image data."
+        ]);
+        return false;
+    }
+    
+    if (strlen($image_data) > 5 * 1024 * 1024) { // 5MB limit
+        echo json_encode([
+            "status" => "error",
+            "message" => "File size too large. Maximum 5MB allowed."
+        ]);
+        return false;
+    }
+    
+    if (file_put_contents($target_path, $image_data)) {
+        return $target_path;
+    } else {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Failed to save image."
         ]);
         return false;
     }

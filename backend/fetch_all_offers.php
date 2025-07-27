@@ -1,4 +1,5 @@
 <?php
+include 'conn.php';
 // fetch_all_offers.php - Fetch all offers
 //added for CROS (hari)
 header('Content-Type: application/json');
@@ -11,8 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-
-include 'conn.php';
 
 try {
     // Get session ID from request headers

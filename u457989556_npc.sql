@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 22, 2025 at 06:56 PM
+-- Generation Time: Jul 27, 2025 at 05:24 AM
 -- Server version: 10.11.10-MariaDB-log
 -- PHP Version: 7.2.34
 
@@ -41,7 +41,7 @@ CREATE TABLE `admin_login` (
 --
 
 INSERT INTO `admin_login` (`id`, `email`, `password`, `sessionid`, `session_expiry`, `fcm_token`) VALUES
-(1, 'npc@gmail.com', '$2y$10$cDKTJB/PUCCHnHPRFWNSyuh4Fm0trcCu4t8Aq1aUvlv7GIjXHh16.', '8a727d8fff9b9f4118e147d959d6c0fdfd3646c1cd5d75d1020f09f7d34ab33e', '2025-07-24 18:49:45', 'web_token');
+(1, 'npc@gmail.com', '$2y$10$cDKTJB/PUCCHnHPRFWNSyuh4Fm0trcCu4t8Aq1aUvlv7GIjXHh16.', '90ac719c3df908278ebcc614e3b315c917e87453ed062a65b337edbe26fcc9b7', '2025-07-28 18:43:49', 'web_token');
 
 -- --------------------------------------------------------
 
@@ -98,9 +98,16 @@ INSERT INTO `bookings` (`booking_id`, `user_id`, `service_name`, `service_date`,
 ('BK202507158048', 3, 'Termite Control', '2025-07-17', '11:00 AM - 1:00 PM', 'dno \n43 shanthi nagar', '', 2800.75, 420.11, NULL, 0.00, 2380.64, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-15 02:21:39', '2025-07-15 02:26:02', 8),
 ('BK202507213571', 22, 'CrittenClean', '2025-07-22', '9:00 AM - 11:00 AM', '3kd', '', 2000.00, 300.00, NULL, 0.00, 1700.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-21 08:05:40', '2025-07-21 09:03:24', 1),
 ('BK202507216071', 22, 'Sanitization', '2025-07-22', '9:00 AM - 11:00 AM', '3kd', '', 1000.00, 150.00, NULL, 0.00, 850.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-21 08:57:51', '2025-07-22 15:40:37', 5),
-('BK202507222188', 22, 'Rat Control', '2025-07-23', '2:00 PM - 4:00 PM', '3kd', '', 2000.00, 300.00, NULL, 0.00, 1700.00, 'cash', 'pending', NULL, NULL, 'pending', '2025-07-22 16:18:23', '2025-07-22 16:18:23', NULL),
-('BK202507224065', 22, 'Sanitization', '2025-07-23', '9:00 AM - 11:00 AM', '3kd', '', 5000.00, 750.00, NULL, 0.00, 4250.00, 'cash', 'pending', NULL, NULL, 'pending', '2025-07-22 16:19:06', '2025-07-22 16:19:06', NULL),
-('BK202507227888', 22, 'General Pest', '2025-07-23', '6:00 PM - 8:00 PM', '3kd', '', 4500.00, 675.00, NULL, 0.00, 3825.00, 'cash', 'pending', NULL, NULL, 'pending', '2025-07-22 16:19:20', '2025-07-22 16:19:20', NULL);
+('BK202507222188', 22, 'Rat Control', '2025-07-23', '2:00 PM - 4:00 PM', '3kd', '', 2000.00, 300.00, NULL, 0.00, 1700.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-22 16:18:23', '2025-07-24 18:04:25', 8),
+('BK202507224065', 22, 'Sanitization', '2025-07-23', '9:00 AM - 11:00 AM', '3kd', '', 5000.00, 750.00, NULL, 0.00, 4250.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-22 16:19:06', '2025-07-24 17:56:51', 6),
+('BK202507227888', 22, 'General Pest', '2025-07-23', '6:00 PM - 8:00 PM', '3kd', '', 4500.00, 675.00, NULL, 0.00, 3825.00, 'cash', 'pending', NULL, NULL, 'pending', '2025-07-22 16:19:20', '2025-07-22 16:19:20', NULL),
+('BK202507237129', 24, 'Rat Control', '2025-07-24', '6:00 PM - 8:00 PM', 'PBS castle', '', 2000.00, 300.00, NULL, 0.00, 1700.00, 'razorpay', 'paid', NULL, 'pay_QwO81OhFZtE6xK', 'pending', '2025-07-23 05:09:37', '2025-07-23 05:09:38', NULL),
+('BK202507237438', 24, 'New', '2025-07-24', '11:00 AM - 1:00 PM', 'PBS castle', '', 1200.00, 180.00, NULL, 0.00, 1020.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-23 05:22:54', '2025-07-23 15:34:19', 1),
+('BK202507244224', 22, 'Rat Control', '2025-07-25', '6:00 PM - 8:00 PM', 'asd', 'asd', 2000.00, 300.00, NULL, 0.00, 1700.00, '', 'pending', NULL, NULL, 'confirmed', '2025-07-24 05:29:02', '2025-07-24 17:36:46', 1),
+('BK202507245149', 22, 'Bugs Control', '2025-07-25', '2:00 PM - 4:00 PM', 'SDS', 'ASD', 1500.00, 225.00, NULL, 0.00, 1275.00, '', 'paid', NULL, 'pay_Qwn5uqIfseXTGf', 'confirmed', '2025-07-24 05:34:45', '2025-07-24 17:56:28', 3),
+('BK202507246364', 22, 'Bugs Control', '2025-07-24', '9:00 AM - 11:00 AM', 'hgfh', ' ghcgh', 3000.00, 450.00, NULL, 0.00, 2550.00, 'cash', 'pending', NULL, NULL, 'confirmed', '2025-07-24 05:10:14', '2025-07-24 18:01:05', 7),
+('BK202507248193', 22, 'Rat Control', '2025-07-24', '2:00 PM - 4:00 PM', 'asdf', 'asdf', 2000.00, 300.00, 'test1', 200.00, 1500.00, '', 'pending', NULL, NULL, 'pending', '2025-07-24 05:21:55', '2025-07-24 05:21:55', NULL),
+('BK202507248876', 22, 'Rat Control', '2025-07-25', '2:00 PM - 4:00 PM', '456', '1334', 2000.00, 300.00, 'test1', 200.00, 1500.00, '', 'pending', NULL, NULL, 'confirmed', '2025-07-24 05:28:31', '2025-07-24 17:59:01', 3);
 
 -- --------------------------------------------------------
 
@@ -152,7 +159,17 @@ INSERT INTO `booking_items` (`id`, `booking_id`, `service_type_name`, `room_size
 (27, 'BK202507216071', 'Hospital', 'Icu ward', 1000.00, 1, 1000.00),
 (28, 'BK202507222188', 'Residential', '1BHK', 2000.00, 1, 2000.00),
 (29, 'BK202507224065', 'hotel', 'hall', 5000.00, 1, 5000.00),
-(30, 'BK202507227888', 'Hospital', 'ICU Ward', 4500.00, 1, 4500.00);
+(30, 'BK202507227888', 'Hospital', 'ICU Ward', 4500.00, 1, 4500.00),
+(31, 'BK202507237129', 'Residential', '1BHK', 2000.00, 1, 2000.00),
+(32, 'BK202507237438', 'BHKS', '1 BHK', 1000.00, 1, 1000.00),
+(33, 'BK202507237438', 'BHKS', '2 BHK', 200.00, 1, 200.00),
+(34, 'BK202507246364', 'Residential', '1BHk', 500.00, 2, 1000.00),
+(35, 'BK202507246364', 'Residential', '2BHK', 1000.00, 2, 2000.00),
+(36, 'BK202507248193', 'Residential', '1BHK', 2000.00, 1, 2000.00),
+(37, 'BK202507248876', 'Residential', '1BHK', 2000.00, 1, 2000.00),
+(38, 'BK202507244224', 'Residential', '1BHK', 2000.00, 1, 2000.00),
+(39, 'BK202507245149', 'Residential', '1BHk', 500.00, 1, 500.00),
+(40, 'BK202507245149', 'Residential', '2BHK', 1000.00, 1, 1000.00);
 
 -- --------------------------------------------------------
 
@@ -184,7 +201,7 @@ INSERT INTO `contact_queries` (`id`, `user_id`, `first_name`, `last_name`, `emai
 (1, 1, 'ggh', 'ghu', 'saiganesh78901@gmail.com', '9840523294', 'Feedback', 'Cgggg', 'responded', 'Will be fixed thank you', '2025-06-04 11:49:11', '2025-06-04 04:35:41', '2025-06-04 11:49:11'),
 (6, 1, 'cvg', 'ggg', 'saiganesh78901@gmail.com', '9840523294', 'Billing Inquiry', 'Ghhh', 'pending', NULL, NULL, '2025-06-05 07:48:00', '2025-06-05 07:48:00'),
 (7, 1, 'fff', 'ccc', 'saiganesh78901@gmail.com', '9840523294', 'Billing Inquiry', 'Jsjsjd', 'pending', NULL, NULL, '2025-06-05 07:51:19', '2025-06-05 07:51:19'),
-(8, 1, 'fcf', 'cccc', 'saiganesh78901@gmail.com', '9840523294', 'Billing Inquiry', 'Shdhdh', 'pending', NULL, NULL, '2025-06-05 07:54:22', '2025-06-05 07:54:22'),
+(8, 1, 'fcf', 'cccc', 'saiganesh78901@gmail.com', '9840523294', 'Billing Inquiry', 'Shdhdh', 'responded', 'asdf', '2025-07-24 16:42:48', '2025-06-05 07:54:22', '2025-07-24 16:42:48'),
 (9, 1, 'xdd', 'xxx', 'saiganesh78901@gmail.com', '9840523294', 'Billing Inquiry', 'Nsjsjsjss', 'responded', 'Will be solved', '2025-06-17 11:42:56', '2025-06-05 07:57:18', '2025-06-17 11:42:56');
 
 -- --------------------------------------------------------
@@ -279,7 +296,21 @@ INSERT INTO `notifications` (`notification_id`, `user_type`, `user_id`, `title`,
 (44, 'technician', 7, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507077028. Service: Bugs Control. Date: 2025-07-08 at 9:00 AM - 11:00 AM.', 'booking_assigned', 'BK202507077028', 0, '2025-07-22 15:40:12', '2025-07-22 15:40:12'),
 (45, 'customer', 3, 'Technician Assigned', 'Good news! Technician Ayesha has been assigned to your booking #BK202507077028. They will contact you soon.', 'status_update', 'BK202507077028', 0, '2025-07-22 15:40:12', '2025-07-22 15:40:12'),
 (46, 'technician', 5, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507216071. Service: Sanitization. Date: 2025-07-22 at 9:00 AM - 11:00 AM.', 'booking_assigned', 'BK202507216071', 0, '2025-07-22 15:40:37', '2025-07-22 15:40:37'),
-(47, 'customer', 22, 'Technician Assigned', 'Good news! Technician Sai Ganesh S has been assigned to your booking #BK202507216071. They will contact you soon.', 'status_update', 'BK202507216071', 0, '2025-07-22 15:40:37', '2025-07-22 15:40:37');
+(47, 'customer', 22, 'Technician Assigned', 'Good news! Technician Sai Ganesh S has been assigned to your booking #BK202507216071. They will contact you soon.', 'status_update', 'BK202507216071', 0, '2025-07-22 15:40:37', '2025-07-22 15:40:37'),
+(48, 'technician', 1, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507237438. Service: New. Date: 2025-07-24 at 11:00 AM - 1:00 PM.', 'booking_assigned', 'BK202507237438', 0, '2025-07-23 15:34:19', '2025-07-23 15:34:19'),
+(49, 'customer', 24, 'Technician Assigned', 'Good news! Technician Rishi has been assigned to your booking #BK202507237438. They will contact you soon.', 'status_update', 'BK202507237438', 0, '2025-07-23 15:34:19', '2025-07-23 15:34:19'),
+(50, 'technician', 1, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507244224. Service: Rat Control. Date: 2025-07-25 at 6:00 PM - 8:00 PM.', 'booking_assigned', 'BK202507244224', 0, '2025-07-24 17:36:46', '2025-07-24 17:36:46'),
+(51, 'customer', 22, 'Technician Assigned', 'Good news! Technician Rishi has been assigned to your booking #BK202507244224. They will contact you soon.', 'status_update', 'BK202507244224', 0, '2025-07-24 17:36:46', '2025-07-24 17:36:46'),
+(52, 'technician', 3, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507245149. Service: Bugs Control. Date: 2025-07-25 at 2:00 PM - 4:00 PM.', 'booking_assigned', 'BK202507245149', 0, '2025-07-24 17:56:28', '2025-07-24 17:56:28'),
+(53, 'customer', 22, 'Technician Assigned', 'Good news! Technician John Doe has been assigned to your booking #BK202507245149. They will contact you soon.', 'status_update', 'BK202507245149', 0, '2025-07-24 17:56:28', '2025-07-24 17:56:28'),
+(54, 'technician', 6, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507224065. Service: Sanitization. Date: 2025-07-23 at 9:00 AM - 11:00 AM.', 'booking_assigned', 'BK202507224065', 0, '2025-07-24 17:56:51', '2025-07-24 17:56:51'),
+(55, 'customer', 22, 'Technician Assigned', 'Good news! Technician Anbu Kutty has been assigned to your booking #BK202507224065. They will contact you soon.', 'status_update', 'BK202507224065', 0, '2025-07-24 17:56:51', '2025-07-24 17:56:51'),
+(56, 'technician', 3, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507248876. Service: Rat Control. Date: 2025-07-25 at 2:00 PM - 4:00 PM.', 'booking_assigned', 'BK202507248876', 0, '2025-07-24 17:59:01', '2025-07-24 17:59:01'),
+(57, 'customer', 22, 'Technician Assigned', 'Good news! Technician John Doe has been assigned to your booking #BK202507248876. They will contact you soon.', 'status_update', 'BK202507248876', 0, '2025-07-24 17:59:01', '2025-07-24 17:59:01'),
+(58, 'technician', 7, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507246364. Service: Bugs Control. Date: 2025-07-24 at 9:00 AM - 11:00 AM.', 'booking_assigned', 'BK202507246364', 0, '2025-07-24 18:01:05', '2025-07-24 18:01:05'),
+(59, 'customer', 22, 'Technician Assigned', 'Good news! Technician Ayesha has been assigned to your booking #BK202507246364. They will contact you soon.', 'status_update', 'BK202507246364', 0, '2025-07-24 18:01:05', '2025-07-24 18:01:05'),
+(60, 'technician', 8, 'New Job Assignment', 'You have been assigned to a new job. Booking ID: BK202507222188. Service: Rat Control. Date: 2025-07-23 at 2:00 PM - 4:00 PM.', 'booking_assigned', 'BK202507222188', 0, '2025-07-24 18:04:25', '2025-07-24 18:04:25'),
+(61, 'customer', 22, 'Technician Assigned', 'Good news! Technician Arun Kumar has been assigned to your booking #BK202507222188. They will contact you soon.', 'status_update', 'BK202507222188', 0, '2025-07-24 18:04:25', '2025-07-24 18:04:25');
 
 -- --------------------------------------------------------
 
@@ -329,7 +360,8 @@ INSERT INTO `offers` (`offer_id`, `offer_name`, `coupon_number`, `offer_starts_o
 (1, 'New Year Sale', 'NY2025', '2025-01-01', '2025-06-13', 20.00, 'offer-banner/NY2025_67877d0773f6b.jpg', '2025-01-15 09:16:55'),
 (3, 'womens day special', 'WOMEN2025', '2025-03-11', '2025-03-13', 3.00, 'offer-banner/WOMEN2025_67cfd0d35be98.jpg', '2025-03-11 05:57:39'),
 (4, 'Workers Day', 'WORKING2025', '2025-03-05', '2025-03-10', 3.00, 'offer-banner/WORKING2025_67cfd55a72f1d.jpg', '2025-03-11 06:16:58'),
-(5, 'diwali', '1212', '2025-07-07', '2025-07-18', 12.00, 'offer-banner/1212_686c05dc93014.jpg', '2025-07-07 17:37:32');
+(7, 'New Test', 'test1', '2025-07-22', '2025-07-31', 10.00, 'offer-banner/test1_68806f3257e71.jpg', '2025-07-23 05:12:18'),
+(24, 'asd', 'test123', '2025-07-27', '2025-07-30', 12.00, 'offer-banner/test123_688520f7ef676.jpg', '2025-07-26 18:39:51');
 
 -- --------------------------------------------------------
 
@@ -431,14 +463,16 @@ CREATE TABLE `services` (
 --
 
 INSERT INTO `services` (`service_id`, `service_name`, `description`, `image_path`, `created_at`, `locations`) VALUES
-(1, 'Rat Control', 'General rat control services', 'ServiceImages/pest1.jpg', '2025-01-15 08:36:36', NULL),
+(1, 'Rat Control', 'General rat control services', 'ServiceImages/pest1.jpg', '2025-01-15 08:36:36', '[\"Chennai\",\"Coimbatore\",\"Erode\",\"Salem\"]'),
 (2, 'Bugs Control', 'General Bugs control services', 'ServiceImages/pest1.jpg', '2025-01-15 08:36:49', NULL),
 (3, 'General Pest', 'General Pest services', 'ServiceImages/pest1.jpg', '2025-01-15 08:37:17', NULL),
 (4, 'Termite Control', 'General Termite control services', 'ServiceImages/pest1.jpg', '2025-01-31 16:16:02', NULL),
 (6, 'Sanitization', 'Sanitization works', 'ServiceImages/image.png', '2025-03-11 07:02:30', NULL),
 (7, 'CrittenClean', 'Humane and efficient removal of rodents insects and other pests. Clean living starts here.', 'ServiceImages/pest1.jpg', '2025-04-10 17:40:11', NULL),
 (8, 'cleaning', 'clean', 'ServiceImages/service_1751909796_686c05a4715e4.jpg', '2025-07-07 17:36:36', NULL),
-(9, 'New', 'Hell', 'ServiceImages/service_1752339543_687294578d3ef.jpg', '2025-07-12 16:59:03', '[\"Chennai\"]');
+(9, 'New', 'Hello Everyone', 'ServiceImages/service_1752339543_687294578d3ef.jpg', '2025-07-12 16:59:03', '[\"Chennai\"]'),
+(10, 'test hari', 'test 1111', 'ServiceImages/service_1753442414_6883686e37706.jpg', '2025-07-23 16:08:09', '[]'),
+(11, 'test sidhu', 'asdf', 'ServiceImages/service_1753555398_688521c67e9cc.jpg', '2025-07-26 18:43:18', '[\"Chennai\",\"Coimbatore\"]');
 
 -- --------------------------------------------------------
 
@@ -474,7 +508,10 @@ INSERT INTO `service_details` (`service_type_id`, `service_type_name`, `service_
 (24, 'Industrial', 6, 'Backyard', 7000.00, '2025-03-16 06:07:24'),
 (25, 'Hospital', 6, 'Icu ward', 1000.00, '2025-03-16 06:07:49'),
 (26, 'bedroom', 7, '1bhk', 2000.00, '2025-06-17 11:42:11'),
-(27, 'hotel', 6, 'hall', 5000.00, '2025-07-07 17:36:04');
+(27, 'hotel', 6, 'hall', 5000.00, '2025-07-07 17:36:04'),
+(28, 'BHKS', 9, '1 BHK', 1000.00, '2025-07-23 04:16:02'),
+(29, 'BHKS', 9, '2 BHK', 200.00, '2025-07-23 04:16:02'),
+(31, '', 10, '1 bhk', 100.00, '2025-07-26 18:02:17');
 
 -- --------------------------------------------------------
 
@@ -501,12 +538,13 @@ CREATE TABLE `technicians` (
 --
 
 INSERT INTO `technicians` (`technician_id`, `employee_name`, `phone_number`, `service_type`, `address`, `id_proof`, `email`, `password`, `sessionid`, `session_expiry`, `fcm_token`) VALUES
-(1, 'Rishi', '1234567890', 'Pest Control', '123 Main Street', 'tech_idproof/6787599fe16a7.png', 'rishi@gmail.com', '$2y$10$JCVOHVHmEHtga5Z//y4lp.x/a1DNja9vl2LVRbOFuoA6C.CpStrgK', 'd3f80e734613d131f583853dd55375d2a44e220754e9bf82a6ca6ba96743eeb8', '2025-07-24 13:11:33', 'web_token'),
+(1, 'Rishi', '1234567890', 'Pest Control', '123 Main Street', 'tech_idproof/6787599fe16a7.png', 'rishi@gmail.com', '$2y$10$JCVOHVHmEHtga5Z//y4lp.x/a1DNja9vl2LVRbOFuoA6C.CpStrgK', 'ce9fba13befb61c3363d6db8538bb8c0e447cb36114fb47e6d8ad7c01cb39b29', '2025-07-25 16:17:25', 'fq7S1hHlQEaIy3sEU6SAnR:APA91bGbDHNv5ok8gy7bkbw0W-1JmBPe3se0giizzEkNdvJvLR53DY5mI4NKAmlKLljRPoeRBF2cQS_Iv0JKIzvVn203CsjYwoiUEQ2dDmWiI7mQP0OPY8o'),
 (3, 'John Doe', '1234567890', 'Pest Control', '123 Main Street', 'tech_idproof/67875ce383471.png', 'hari@gmail.com', '$2y$10$g8Kcv3CeoX5eMBC1UzPPRenqaFZH3Juf1R9eS8xA3rPnH0I8IV9e.', NULL, NULL, NULL),
 (5, 'Sai Ganesh S', '9840523294', 'Pest Control', '5/68 MMDA maduravoyal chennai', 'tech_idproof/67b0448bc0f2c.png', 'sai@gmail.com', '$2y$10$tbeL9yohIg2c4JlpMLoc0.de8.d4MKzaE1Y9pSg62HSgzsd5G2SY6', '5be2d052732ca77643afad14b96769b916cf8c75a752c7940200522e7b278003', '2025-06-06 05:23:07', 'your_sample_fcm_token'),
 (6, 'Anbu Kutty', '9840523296', 'Terminate ', '7th street madurai ', 'tech_idproof/67cdc8a7654e3.png', 'anbukutty@gmail.com', '$2y$10$l1z9yKxAR06QRCX.WtPCsuDGPrYJlTlTzRQmlCJ61BYpZitOI44YK', NULL, NULL, NULL),
 (7, 'Ayesha', '9840523200', 'Bug control', 'Theni abeth street ', 'tech_idproof/67cdd21a12e8f.png', 'ayesha@gmail.com', '$2y$10$mUfGG/VKYtWhcf5xUMFnsuykVZ2bMxaT9i1DHysZWNffTs7b5nyTK', NULL, NULL, NULL),
-(8, 'Arun Kumar', '9840526294', 'Bed bugs', 'kodaikanal village park', 'tech_idproof/67cf083575fc0.png', 'arun@gmail.com', '$2y$10$TLfxLUBXRbxf44p2Vc1n6OjNBaTbK20MZ5lQTSqjZPzbXzF.dcPHm', 'c985737260518cb87ba37b98cc5bcf1cc7d8e01f4e4c328afe6d38c2acca895f', '2025-06-19 13:44:31', 'fYCIzg9vSUWisfeeDD9VS6:APA91bE1vWgcSVJNvetbozgkOlLj3Edt78xpKryY1-pw7XMgJdN9ZKDwN31E4KCLuO_L_sSMNw_apNC49EJ6qBMPasy9UIYeNCDoCBEI8u8Udu6HtVhn-6Q');
+(8, 'Arun Kumar', '9840526294', 'Bed bugs', 'kodaikanal village park', 'tech_idproof/67cf083575fc0.png', 'arun@gmail.com', '$2y$10$TLfxLUBXRbxf44p2Vc1n6OjNBaTbK20MZ5lQTSqjZPzbXzF.dcPHm', 'c985737260518cb87ba37b98cc5bcf1cc7d8e01f4e4c328afe6d38c2acca895f', '2025-06-19 13:44:31', 'fYCIzg9vSUWisfeeDD9VS6:APA91bE1vWgcSVJNvetbozgkOlLj3Edt78xpKryY1-pw7XMgJdN9ZKDwN31E4KCLuO_L_sSMNw_apNC49EJ6qBMPasy9UIYeNCDoCBEI8u8Udu6HtVhn-6Q'),
+(9, 'hhh', '6658', 'cvhh', 'cghhh', 'tech_idproof/tech_688061bab200b6.85456976.png', 'the@gmail.com', '$2y$10$LuCupFH3fNeW9yKJpLSlB.kC/3BYHZLygRB/BU05TC8pr3vW/3DlG', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -558,7 +596,14 @@ INSERT INTO `technician_status_log` (`log_id`, `booking_id`, `technician_id`, `s
 (26, 'BK202507213571', 1, 'assigned', '2025-07-21 09:03:24', 'Technician assigned by admin', NULL, NULL),
 (27, 'BK202507153726', 1, 'assigned', '2025-07-21 09:03:57', 'Technician assigned by admin', NULL, NULL),
 (28, 'BK202507077028', 7, 'assigned', '2025-07-22 15:40:12', 'Technician assigned by admin', NULL, NULL),
-(29, 'BK202507216071', 5, 'assigned', '2025-07-22 15:40:37', 'Technician assigned by admin', NULL, NULL);
+(29, 'BK202507216071', 5, 'assigned', '2025-07-22 15:40:37', 'Technician assigned by admin', NULL, NULL),
+(30, 'BK202507237438', 1, 'assigned', '2025-07-23 15:34:19', 'Technician assigned by admin', NULL, NULL),
+(31, 'BK202507244224', 1, 'assigned', '2025-07-24 17:36:46', 'Technician assigned by admin', NULL, NULL),
+(32, 'BK202507245149', 3, 'assigned', '2025-07-24 17:56:28', 'Technician assigned by admin', NULL, NULL),
+(33, 'BK202507224065', 6, 'assigned', '2025-07-24 17:56:51', 'Technician assigned by admin', NULL, NULL),
+(34, 'BK202507248876', 3, 'assigned', '2025-07-24 17:59:01', 'Technician assigned by admin', NULL, NULL),
+(35, 'BK202507246364', 7, 'assigned', '2025-07-24 18:01:05', 'Technician assigned by admin', NULL, NULL),
+(36, 'BK202507222188', 8, 'assigned', '2025-07-24 18:04:25', 'Technician assigned by admin', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -587,9 +632,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `customer_name`, `mobile_number`, `address1`, `address2`, `profile_pic`, `email_id`, `gender`, `country`, `password`, `sessionid`, `session_expiry`, `fcm_token`) VALUES
-(1, 'Hari raja', '9840523294', '5/68 MMDA maduravoyal chennai', 'samantha', 'userprofile/profile_68729c35e2e923.07158991.jpg', 'hari@gmail.co', 'Male', 'India', '$2y$10$fR/JoswSNNriyoDh5J.1U.dOn5qzUfH/2wlMON6ud0he8ytEJ8/VO', '2b888442b0af2584144a7e155d13f883ebe56bd1526cb810f4cb0a46457149a0', '2025-07-14 17:24:15', 'fxYD1Y5NQ-mmZEbVHQCcKa:APA91bFNFerryrlniQ0hvE115tuScV_gSNnL0DoLyCX_AvGXjux-faj70-MgWWdqpNp3DQGVKkp6eSvBZui5Or2TGmZXtLlKqyLVHle8Wq_yDJUWRrnr5Gk'),
+(1, 'Hari raja', '9840523294', '5/68 MMDA maduravoyal chennai', 'samantha', 'userprofile/profile_68729c35e2e923.07158991.jpg', 'hari@gmail.co', 'Male', 'India', '$2y$10$fR/JoswSNNriyoDh5J.1U.dOn5qzUfH/2wlMON6ud0he8ytEJ8/VO', '301709e6708609e0c2d4f51ed2492df651a06931c37a07c5ad2255aef2eefe3c', '2025-07-25 04:38:08', 'fxYD1Y5NQ-mmZEbVHQCcKa:APA91bFNFerryrlniQ0hvE115tuScV_gSNnL0DoLyCX_AvGXjux-faj70-MgWWdqpNp3DQGVKkp6eSvBZui5Or2TGmZXtLlKqyLVHle8Wq_yDJUWRrnr5Gk'),
 (2, 'Rishi', '9840523264', 'kurukul sandhu pillar Kovil', 'hell', 'userprofile/profile_67d68f0593b5f3.71923177.jpg', 'rishivasan@gmail.com', 'Male', 'India', '$2y$10$sihJDojCvHe2kH8co5RXv.lYwW92EJpLgUi1IV0t8eLNq.96yN8rm', '5e2657d2600e76a9f2f80cd1344785dc2292dc23654f7a88fb7a6cf3aa39ecba', '2025-03-18 09:07:07', 'your_sample_fcm_token'),
-(3, 'anjana', '7904342001', 'dno \n43 shanthi nagar', '', 'userprofile/profile_685b95cd50bdb8.64733011.jpg', 'anjanaeswaran001@gmail.com', 'Female', 'India', '$2y$10$xiLCGygstpSL2sIwJ.Hb/eUYmpFInPb2woUVCgVUgOEYOPq/Yb1Py', '7120b6f19f3e9c4ac5f1aca3b56ae03dfd1a490db00c321c7e2e2647bf6513a9', '2025-07-22 13:19:01', 'ddJebK_zS6-zDovBO8jLRV:APA91bG9B3wLIa1MyIh5UtIwUiwRI5r4HNb-KF4NZZs9fuB_5DgfUSqrTYWlOUxvuPel9PqpJO1deDVS3j0s-tctGQdPoxNvlNYeyceGEQQBZHcX4axJCSQ'),
+(3, 'anjana', '7904342001', 'dno \n43 shanthi nagar', '', 'userprofile/profile_685b95cd50bdb8.64733011.jpg', 'anjanaeswaran001@gmail.com', 'Female', 'India', '$2y$10$xiLCGygstpSL2sIwJ.Hb/eUYmpFInPb2woUVCgVUgOEYOPq/Yb1Py', '04dc3572504e903176787fb66c44749c7d92fddd021718864d258d86556ccdb3', '2025-07-25 05:05:09', 'eUdNJEgTTg-wLg9Hn0jSnY:APA91bEw4nsoQWJa4VAOvwLgWtXuxkAuLgApQoKBTVvWHdpVNYw-kNA5-FOsDYrOHP4isg54RS74Qh-u7xpothzZ4VSd_PmcbJ_hwmXW4uQUu_2IRX-HslE'),
 (4, 'Ashik', '8637454428', '', NULL, NULL, '', NULL, NULL, '$2y$10$GFGGfhJ8is6MXj0DKJkSvOvvJtqJnogS7thc53/pGj66DaPB.h22O', '0a69e4635cf09915a4bf5ca2352804e598896ef2691faad4548ba24aa0f124f0', '2025-06-27 06:26:26', NULL),
 (16, 'fgg', '9840553297', 'thrid', '', NULL, 'uri@gmail.com', 'Male', 'India', '$2y$10$jVDi/xXQ/Is.8PF54EYmQuPE/tihojMp6qfkxni7HmvKqZvj0crHO', '1b5fa0810beb102576efd2226d5cffebd0001b10a17d8550177b6995691d81b1', '2025-06-27 06:54:29', 'fYCIzg9vSUWisfeeDD9VS6:APA91bE1vWgcSVJNvetbozgkOlLj3Edt78xpKryY1-pw7XMgJdN9ZKDwN31E4KCLuO_L_sSMNw_apNC49EJ6qBMPasy9UIYeNCDoCBEI8u8Udu6HtVhn-6Q'),
 (17, 'sabanaparveen', '7339424526', '', NULL, NULL, 'user_1750835321_1315@placeholder.com', NULL, NULL, '$2y$10$/FnMcZZ14veRT7m0MEh6C.0QlvNdLEDK95yuSbX.SqmuxMAO5kTkS', 'fd6fc50ab5f9efed8756fb074b39350255d41fb7de7598649601a4c901061d15', '2025-06-27 07:08:41', NULL),
@@ -597,8 +642,9 @@ INSERT INTO `users` (`user_id`, `customer_name`, `mobile_number`, `address1`, `a
 (19, 'Tharik', '6383428143', 'Jawadupatty', NULL, NULL, 'user_1750868414_3202@placeholder.com', NULL, NULL, '$2y$10$vXL5wDp0MBpPO.5cyXrU9eBe58GMacthHA2lxD3p19NT5bel66HAG', '76692bed040737a04d06572ad85ea11cff2737ca5966002e0a4ab4b8767974a6', '2025-06-27 16:20:33', 'c4bvphf-SGu0-Fp_sOLlTk:APA91bFWCP4do0yLUooYGk1tXESWm4ncyq1Ps3SilkS39qWbt7dIacDTq1vAGWGNvdFvVEuFQZ7_IILWdqqVxfvK75YJl0aOKQj15MZ_3uh3ktTLa8lXB2Q'),
 (20, 'aju', '7977813204', 'shanthi nagar', NULL, NULL, 'user_1751907381_7235@placeholder.com', NULL, NULL, '$2y$10$tkesFHpa0kfa6brHbRHbM.k8381DE8LR79LnlKdI4GIilTjaRrZxy', 'c0bd411b72300f5f54efb661ff2f0716362de8fa197fb1030704028cc471376e', '2025-07-09 16:56:38', 'dmm6rVIoR-eTliq0ONkBz2:APA91bEfDyxCVE8YtpVaAjJ-eqhz_y06pBDBR6ZLsupOqnyoFaRv5K0EXMe6nSaEga8J-ZOUF_uMQxHRWE-IV9YzRd1m59_ZF76uXMiaDiuiETQs-50f2Gk'),
 (21, 'Mohammed Rafi', '9324867676', '', NULL, NULL, 'user_1751970217_6078@placeholder.com', NULL, NULL, '$2y$10$gM.8RQt65gSerZLDR3UaZOjgn8ocpBah/6EsCj2TYVrbUpmMPBapi', 'd4ace4a096f2b287e472dad1542c4769350a609bce3f5f960b72b9ee5b48871c', '2025-07-10 10:23:59', 'dKxUBecsRW-kEmo-i2NUCZ:APA91bFnVnoOTXjGzUMfkRJkTxVWhMt0wLXT-yr0mNapLJsc-H3LLIcWBtP45r2uL1vLd99m9K4aI038aQnP1bMPLTFVu_fCGGs-BlYQCGeYIIVXrUjdvu0'),
-(22, 'hari', '8940645820', '3kd', NULL, NULL, 'user_1753015685_5040@placeholder.com', NULL, NULL, '$2y$10$t6TcMjMvqNbkN4D1QFEdE.Qm4xv7QBIpXNKE36hr6zlvYmPvkhrRa', '6453a25b777f4384216bfd16199cf05771080c97e397d56d8c24a112fb8a4a99', '2025-07-24 16:21:29', 'fq7S1hHlQEaIy3sEU6SAnR:APA91bGbDHNv5ok8gy7bkbw0W-1JmBPe3se0giizzEkNdvJvLR53DY5mI4NKAmlKLljRPoeRBF2cQS_Iv0JKIzvVn203CsjYwoiUEQ2dDmWiI7mQP0OPY8o'),
-(23, 'hari', '8940645828', '', NULL, NULL, 'user_1753017114_4568@placeholder.com', NULL, NULL, '$2y$10$/GzBjAiLjwtV5.yQovnXqOYDrheuvR..NGIx34p6tOOkWUnBVcGvm', '8ec1a8c3153206248223331b23dca9b1c4802ad7d266f8dc28fd1a21d352a04f', '2025-07-22 13:11:54', NULL);
+(22, 'hari', '8940645820', '3kd', 'test address', 'userprofile/profile_68810fc4625ec7.35811627.jpg', 'testbari@gmail.com', 'Male', 'India', '$2y$10$t6TcMjMvqNbkN4D1QFEdE.Qm4xv7QBIpXNKE36hr6zlvYmPvkhrRa', 'ca3911d4f978544cde38eb275ad3e73bf8a87fded92112cd21bd127688afd7bd', '2025-07-27 15:17:56', 'web_token'),
+(23, 'hari', '8940645828', '', NULL, NULL, 'user_1753017114_4568@placeholder.com', NULL, NULL, '$2y$10$/GzBjAiLjwtV5.yQovnXqOYDrheuvR..NGIx34p6tOOkWUnBVcGvm', '8ec1a8c3153206248223331b23dca9b1c4802ad7d266f8dc28fd1a21d352a04f', '2025-07-22 13:11:54', NULL),
+(24, 'Ashik', '8111043335', 'PBS castle', NULL, NULL, 'user_1753247139_5219@placeholder.com', NULL, NULL, '$2y$10$q9lzR9At/HrNzbCRjFmS/uq2sqe68FeHuPhONZhB1bSjinvG4TWMq', '92be98871a039b29a39499cd1127915fb775b9521cc925320a84b7864cfc2ee6', '2025-07-27 10:28:02', 'dKxUBecsRW-kEmo-i2NUCZ:APA91bFnVnoOTXjGzUMfkRJkTxVWhMt0wLXT-yr0mNapLJsc-H3LLIcWBtP45r2uL1vLd99m9K4aI038aQnP1bMPLTFVu_fCGGs-BlYQCGeYIIVXrUjdvu0');
 
 -- --------------------------------------------------------
 
@@ -633,7 +679,8 @@ INSERT INTO `user_notifications` (`id`, `user_id`, `status_log_id`, `is_read`, `
 (36, 3, 24, 1, '2025-07-15 02:22:07', '2025-07-15 02:22:07'),
 (37, 3, 23, 1, '2025-07-15 02:22:18', '2025-07-15 02:22:18'),
 (38, 22, 26, 1, '2025-07-22 16:21:45', '2025-07-22 16:21:45'),
-(39, 22, 29, 1, '2025-07-22 16:21:46', '2025-07-22 16:21:46');
+(39, 22, 29, 1, '2025-07-22 16:21:46', '2025-07-22 16:21:46'),
+(40, 24, 30, 1, '2025-07-26 06:30:16', '2025-07-26 06:30:16');
 
 --
 -- Indexes for dumped tables
@@ -785,7 +832,7 @@ ALTER TABLE `admin_login`
 -- AUTO_INCREMENT for table `booking_items`
 --
 ALTER TABLE `booking_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `contact_queries`
@@ -803,7 +850,7 @@ ALTER TABLE `locations`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
 
 --
 -- AUTO_INCREMENT for table `notification_requests`
@@ -815,7 +862,7 @@ ALTER TABLE `notification_requests`
 -- AUTO_INCREMENT for table `offers`
 --
 ALTER TABLE `offers`
-  MODIFY `offer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `offer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `orders`
@@ -839,37 +886,37 @@ ALTER TABLE `reviews`
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `service_details`
 --
 ALTER TABLE `service_details`
-  MODIFY `service_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `service_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `technicians`
 --
 ALTER TABLE `technicians`
-  MODIFY `technician_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `technician_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `technician_status_log`
 --
 ALTER TABLE `technician_status_log`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `user_notifications`
 --
 ALTER TABLE `user_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- Constraints for dumped tables
