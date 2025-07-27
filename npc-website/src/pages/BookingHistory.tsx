@@ -135,6 +135,21 @@ const BookingHistory: React.FC = () => {
     }
   };
 
+  const getStatusIndicatorColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-500';
+      case 'confirmed':
+        return 'bg-blue-500';
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -345,8 +360,7 @@ const BookingHistory: React.FC = () => {
                               {booking.service_name.charAt(0)}
                             </span>
                           </div>
-                          <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                            <span className="text-white text-xs font-bold">₹</span>
+                          <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${getStatusIndicatorColor(booking.status)}`}>
                           </div>
                         </div>
                                                 <div className="flex-1">
@@ -354,16 +368,13 @@ const BookingHistory: React.FC = () => {
                             <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                               {booking.service_name}
                             </h3>
-                            <div className="flex items-center space-x-2">
-                              {getStatusIcon(booking.status)}
-                              <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-md ${getStatusColor(booking.status)}`}>
-                                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                              </span>
-                            </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${getPaymentStatusColor(booking.payment_status)}`}>
                               Payment: {booking.payment_status}
+                            </span>
+                            <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-md ${getStatusColor(booking.status)}`}>
+                              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                             </span>
                           </div>
                         </div>
@@ -377,41 +388,72 @@ const BookingHistory: React.FC = () => {
                     </div>
 
                     {/* Details Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FiCalendar className="w-5 h-5 text-teal-500" />
-                          <span className="text-xs font-medium text-gray-500">Service Date</span>
-                        </div>
-                        <div className="text-sm font-bold text-gray-900">{formatDate(booking.service_date)}</div>
-                      </div>
-                      
-                      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FiClock className="w-5 h-5 text-teal-500" />
-                          <span className="text-xs font-medium text-gray-500">Time Slot</span>
-                        </div>
-                        <div className="text-sm font-bold text-gray-900">{booking.service_time}</div>
-                      </div>
-                      
-                      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FiMapPin className="w-5 h-5 text-teal-500" />
-                          <span className="text-xs font-medium text-gray-500">Location</span>
-                        </div>
-                        <div className="text-sm font-bold text-gray-900 truncate">{booking.address}</div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border-2 border-teal-200 shadow-md hover:shadow-lg transition-all duration-200 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-teal-200/30 to-transparent rounded-full -translate-y-8 translate-x-8"></div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                      {/* Service Date Card */}
+                      <div className="group relative bg-gradient-to-br from-blue-50/60 via-blue-100/40 to-indigo-50/60 rounded-xl p-3 border border-blue-200/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full -translate-y-6 translate-x-6"></div>
                         <div className="relative z-10">
-                          <div className="flex items-center space-x-2 mb-3">
-                            <div className="w-6 h-6 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
-                              <FiShield className="w-4 h-4 text-white" />
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-500/80 to-blue-600/80 rounded-lg flex items-center justify-center shadow-sm">
+                                <FiCalendar className="w-4 h-4 text-white" />
+                              </div>
+                              <span className="text-xs font-bold text-blue-600/80 uppercase tracking-wide">Date</span>
                             </div>
-                            <span className="text-xs font-bold text-teal-700 uppercase tracking-wide">Booking ID</span>
+                            <div className="w-2 h-2 bg-blue-400/60 rounded-full group-hover:animate-pulse"></div>
                           </div>
-                          <div className="text-sm font-bold text-teal-800 font-mono bg-white/80 px-3 py-2 rounded-lg border border-teal-200">
+                          <div className="text-sm font-bold text-gray-900 font-mono">{formatDate(booking.service_date)}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Time Slot Card */}
+                      <div className="group relative bg-gradient-to-br from-emerald-50/60 via-emerald-100/40 to-green-50/60 rounded-xl p-3 border border-emerald-200/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-emerald-200/20 to-transparent rounded-full -translate-y-6 translate-x-6"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/80 to-emerald-600/80 rounded-lg flex items-center justify-center shadow-sm">
+                                <FiClock className="w-4 h-4 text-white" />
+                              </div>
+                              <span className="text-xs font-bold text-emerald-600/80 uppercase tracking-wide">Time</span>
+                            </div>
+                            <div className="w-2 h-2 bg-emerald-400/60 rounded-full group-hover:animate-ping"></div>
+                          </div>
+                          <div className="text-sm font-bold text-gray-900 font-mono">{booking.service_time}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Location Card */}
+                      <div className="group relative bg-gradient-to-br from-purple-50/60 via-purple-100/40 to-violet-50/60 rounded-xl p-3 border border-purple-200/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-purple-200/20 to-transparent rounded-full -translate-y-6 translate-x-6"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-purple-500/80 to-purple-600/80 rounded-lg flex items-center justify-center shadow-sm">
+                                <FiMapPin className="w-4 h-4 text-white" />
+                              </div>
+                              <span className="text-xs font-bold text-purple-600/80 uppercase tracking-wide">Location</span>
+                            </div>
+                            <div className="w-2 h-2 bg-purple-400/60 rounded-full group-hover:animate-bounce"></div>
+                          </div>
+                          <div className="text-sm font-bold text-gray-900 truncate">{booking.address}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Booking ID Card */}
+                      <div className="group relative bg-gradient-to-br from-slate-50/60 via-slate-100/40 to-gray-50/60 rounded-xl p-3 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-slate-200/20 to-transparent rounded-full -translate-y-6 translate-x-6"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-slate-600/80 to-slate-700/80 rounded-lg flex items-center justify-center shadow-sm">
+                                <FiShield className="w-4 h-4 text-white" />
+                              </div>
+                              <span className="text-xs font-bold text-slate-600/80 uppercase tracking-wide">Booking ID</span>
+                            </div>
+                            <div className="w-2 h-2 bg-slate-400/60 rounded-full group-hover:animate-pulse"></div>
+                          </div>
+                          <div className="text-sm font-bold text-slate-800 font-mono bg-white/40 px-2 py-1 rounded border border-slate-300/60">
                             {booking.booking_id}
                           </div>
                         </div>
