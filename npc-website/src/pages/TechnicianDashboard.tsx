@@ -277,11 +277,11 @@ const TechnicianDashboard: React.FC = () => {
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <FiClock className="w-4 h-4 mr-2" />
-                            {order.time_slot}
+                            {order.service_time}
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <FiMapPin className="w-4 h-4 mr-2" />
-                            <span className="truncate">{order.service_address}</span>
+                            <span className="truncate">{order.address}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <FiUser className="w-4 h-4 mr-2" />

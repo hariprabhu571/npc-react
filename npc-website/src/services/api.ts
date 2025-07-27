@@ -54,6 +54,36 @@ export const apiService = {
     }
   },
 
+  // GET request for services (returns data directly)
+  getServices: async (): Promise<any> => {
+    try {
+      const response = await api.get('fetch_services.php');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
+  // GET request for offers (returns data directly)
+  getOffers: async (): Promise<any> => {
+    try {
+      const response = await api.get('fetch_all_offers.php');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
+  // GET request for user bookings (returns data directly)
+  getUserBookings: async (): Promise<any> => {
+    try {
+      const response = await api.get('user-bookings.php');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
   // POST request
   post: async <T>(endpoint: string, data?: any): Promise<ApiResponse<T>> => {
     try {

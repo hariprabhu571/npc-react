@@ -23,6 +23,42 @@ export interface UserProfileData {
   country?: string;
 }
 
+// Specific API Response types
+export interface ServicesResponse {
+  status: 'success' | 'error';
+  services: Service[];
+  filtered_by_location?: string | null;
+  total_count: number;
+  message?: string;
+}
+
+export interface OffersResponse {
+  status: 'success' | 'error';
+  offers: Offer[];
+  message?: string;
+}
+
+export interface BookingsResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  summary: {
+    total_bookings: number;
+    total_spent: number;
+    active_bookings: number;
+    completed_bookings: number;
+  };
+  bookings: {
+    active: Booking[];
+    completed: Booking[];
+    cancelled: Booking[];
+  };
+}
+
 export interface LoginResponseData {
   id?: string;
   email_id?: string;
@@ -38,8 +74,9 @@ export interface Service {
   service_id: string;
   service_name: string;
   description: string;
-  image_url?: string;
-  category?: string;
+  image_path?: string;
+  locations?: string;
+  created_at?: string;
 }
 
 export interface ServiceTypeData {
@@ -57,18 +94,33 @@ export interface PricingField {
 // Booking types
 export interface Booking {
   booking_id: string;
+  service_id?: string | null;
   service_name: string;
-  service_date: string;
-  time_slot: string;
-  service_address: string;
-  special_notes?: string;
-  subtotal: number;
-  discount_amount: number;
+  service_description?: string;
+  service_image?: string | null;
+  category?: string;
+  space_type?: string;
+  item_total: number;
+  taxes: number;
   total_amount: number;
-  payment_method: string;
-  status: 'pending' | 'accepted' | 'completed' | 'cancelled';
-  technician_status?: 'assigned' | 'reached' | 'started' | 'completed';
+  booking_date: string;
+  service_date: string;
+  service_time: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  address: string;
+  special_notes?: string;
+  payment_mode?: string;
+  payment_status: string;
+  payment_id?: string | null;
   created_at: string;
+  updated_at?: string;
+  booking_date_formatted?: string;
+  service_date_formatted?: string;
+  created_at_formatted?: string;
+  can_cancel?: boolean;
+  status_color?: string;
+  status_icon?: string;
+  technician_status?: 'assigned' | 'reached' | 'started' | 'completed';
 }
 
 // Offer types

@@ -14,11 +14,30 @@ import {
   FiSettings
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
-import { Service, Offer } from '../types';
+import { Service, Offer, ServicesResponse, OffersResponse } from '../types';
 import { apiService } from '../services/api';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 import { useQuery } from 'react-query';
 import toast from 'react-hot-toast';
+
+// Helper function to get full image URL
+const getImageUrl = (imagePath?: string): string | null => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+  return `${API_BASE_URL}${imagePath.replace(/^\/+/, '')}`;
+};
+
+// Helper function to get offer image URL
+const getOfferImageUrl = (imagePath?: string): string | null => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+  // The offer_banner_location already contains the full path, just prepend the base URL
+  return `${API_BASE_URL}${imagePath.replace(/^\/+/, '')}`;
+};
 
 const UserDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -29,7 +48,7 @@ const UserDashboard: React.FC = () => {
   // Fetch services
   const { data: servicesData, isLoading: servicesLoading, refetch: refetchServices } = useQuery(
     'services',
-    () => apiService.get<Service[]>(API_ENDPOINTS.FETCH_SERVICES),
+    () => apiService.getServices(),
     {
       retry: 1,
       onError: (error) => {
@@ -41,7 +60,7 @@ const UserDashboard: React.FC = () => {
   // Fetch offers
   const { data: offersData, isLoading: offersLoading, refetch: refetchOffers } = useQuery(
     'offers',
-    () => apiService.get<Offer[]>(API_ENDPOINTS.FETCH_OFFERS),
+    () => apiService.getOffers(),
     {
       retry: 1,
       onError: (error) => {
@@ -50,15 +69,15 @@ const UserDashboard: React.FC = () => {
     }
   );
 
-  const services = servicesData?.data || [];
-  const offers = offersData?.data || [];
+  const services = servicesData?.services || [];
+  const offers = offersData?.offers || [];
 
-  const filteredServices = services.filter(service =>
+  const filteredServices = services.filter((service: Service) =>
     service.service_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredOffers = offers.filter(offer =>
+  const filteredOffers = offers.filter((offer: Offer) =>
     offer.offer_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -188,7 +207,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredServices.map((service, index) => (
+                    {filteredServices.map((service: Service, index: number) => (
                       <motion.div
                         key={service.service_id}
                         initial={{ opacity: 0, y: 20 }}
@@ -197,8 +216,22 @@ const UserDashboard: React.FC = () => {
                         className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => handleServiceClick(service.service_name)}
                       >
-                        <div className="h-48 bg-gradient-to-br from-teal-400 to-blue-500 rounded-t-lg flex items-center justify-center">
-                          <FiShield className="w-16 h-16 text-white" />
+                        <div className="h-48 bg-gradient-to-br from-teal-400 to-blue-500 rounded-t-lg flex items-center justify-center overflow-hidden">
+                          {service.image_path && getImageUrl(service.image_path) ? (
+                            <img
+                              src={getImageUrl(service.image_path)!}
+                              alt={service.service_name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to gradient background if image fails to load
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`flex items-center justify-center ${service.image_path ? 'hidden' : ''}`}>
+                            <FiShield className="w-16 h-16 text-white" />
+                          </div>
                         </div>
                         <div className="p-6">
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -231,7 +264,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredOffers.map((offer, index) => (
+                    {filteredOffers.map((offer: Offer, index: number) => (
                       <motion.div
                         key={offer.offer_id}
                         initial={{ opacity: 0, y: 20 }}
@@ -239,11 +272,25 @@ const UserDashboard: React.FC = () => {
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                         className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <div className="h-48 bg-gradient-to-br from-orange-400 to-red-500 rounded-t-lg flex items-center justify-center relative">
+                        <div className="h-48 bg-gradient-to-br from-orange-400 to-red-500 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+                          {offer.offer_banner_location ? (
+                            <img
+                              src={getOfferImageUrl(offer.offer_banner_location)!}
+                              alt={offer.offer_name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to gradient background if image fails to load
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`flex items-center justify-center ${offer.offer_banner_location ? 'hidden' : ''}`}>
+                            <FiStar className="w-16 h-16 text-white" />
+                          </div>
                           <div className="absolute top-4 right-4 bg-white text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
                             {Math.round(offer.offer_percentage)}% OFF
                           </div>
-                          <FiStar className="w-16 h-16 text-white" />
                         </div>
                         <div className="p-6">
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
