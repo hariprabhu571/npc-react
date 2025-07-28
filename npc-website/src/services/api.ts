@@ -127,6 +127,36 @@ export const apiService = {
       throw new Error(error.response?.data?.message || 'Network error');
     }
   },
+
+  // GET request for user profile
+  getProfile: async (): Promise<any> => {
+    try {
+      const response = await api.get('getprofile.php');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
+  // GET request for user contact queries
+  getUserContactQueries: async (): Promise<any> => {
+    try {
+      const response = await api.get('user_contact_queries.php');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
+
+  // POST request for submitting contact query
+  submitContactQuery: async (data: any): Promise<any> => {
+    try {
+      const response = await api.post('submit_contact_query.php', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Network error');
+    }
+  },
 };
 
 export default api; 

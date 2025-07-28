@@ -16,6 +16,7 @@ import ContactPage from './pages/ContactPage';
 import ProfilePage from './pages/ProfilePage';
 import ChangePassword from './pages/ChangePassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import RaiseTicket from './pages/RaiseTicket';
 import OffersManagement from './pages/OffersManagement';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -228,6 +229,21 @@ const AppContent = () => {
                 exit={{ opacity: 0 }}
               >
                 <PrivacyPolicy />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/raise-ticket" 
+          element={
+            <ProtectedRoute allowedRoles={['User']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <RaiseTicket />
               </motion.div>
             </ProtectedRoute>
           } 

@@ -24,6 +24,7 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import CompanyLogo from '../components/CompanyLogo';
 
 interface SectionProps {
   title: string;
@@ -255,7 +256,17 @@ const PrivacyPolicy: React.FC = () => {
                 whileHover={{ rotate: 5, scale: 1.1 }}
                 transition={{ duration: 0.3 }}
               >
-                <FiShield className="w-8 h-8 text-white" />
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-8 h-8 text-white hidden" />
               </motion.div>
               
               <div>

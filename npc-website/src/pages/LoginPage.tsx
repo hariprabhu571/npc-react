@@ -78,8 +78,18 @@ const LoginPage: React.FC = () => {
           {/* Logo */}
           <div className="text-center">
             <div className="flex justify-center">
-              <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center">
-                <FiShield className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-12 h-12 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-8 h-8 text-white hidden" />
               </div>
             </div>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">

@@ -2632,7 +2632,6 @@ const AdminDashboard: React.FC = () => {
                               <thead className="bg-gray-50">
                                 <tr>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -2643,9 +2642,6 @@ const AdminDashboard: React.FC = () => {
                                   <tr key={service.service_id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                       <div className="font-medium">{service.service_name}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                      <div className="text-sm text-gray-500">{service.description}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                       {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}
@@ -2672,10 +2668,9 @@ const AdminDashboard: React.FC = () => {
                               <div key={service.service_id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                 <div className="p-6">
                                   <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.service_name}</h3>
-                                      <p className="text-sm text-gray-600 line-clamp-3">{service.description}</p>
-                                    </div>
+                                                                      <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.service_name}</h3>
+                                  </div>
                                   </div>
                                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <span>Created: {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}</span>
@@ -2703,7 +2698,6 @@ const AdminDashboard: React.FC = () => {
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
                                     <h3 className="text-lg font-semibold text-gray-900">{service.service_name}</h3>
-                                    <p className="text-sm text-gray-600 mt-1">{service.description}</p>
                                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                                       <span>Created: {service.created_at ? new Date(service.created_at).toLocaleDateString() : 'N/A'}</span>
                                       <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>

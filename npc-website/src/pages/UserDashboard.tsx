@@ -18,7 +18,8 @@ import {
   FiX,
   FiCopy,
   FiExternalLink,
-  FiShield as FiPrivacy
+  FiShield as FiPrivacy,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service, Offer, ServicesResponse, OffersResponse } from '../types';
@@ -241,8 +242,8 @@ const UserDashboard: React.FC = () => {
   const navigationItems = [
     { icon: FiHome, label: 'Home', active: true, onClick: () => {} },
     { icon: FiCalendar, label: 'Bookings', onClick: () => navigate('/bookings') },
-    { icon: FiBell, label: 'Notifications', onClick: () => navigate('/notifications') },
-    { icon: FiShare2, label: 'Share', onClick: () => setShowShareModal(true) },
+    { icon: FiMessageSquare, label: 'Raise a Ticket', onClick: () => navigate('/raise-ticket') },
+    { icon: FiShare2, label: 'Share', onClick: () => navigate('/share') },
     { icon: FiPrivacy, label: 'Privacy Policy', onClick: () => navigate('/privacy-policy') },
     { icon: FiUser, label: 'Profile', onClick: () => navigate('/profile') },
   ];
@@ -254,8 +255,18 @@ const UserDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                <FiShield className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-6 h-6 text-white hidden" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">NPC</h1>
@@ -486,11 +497,7 @@ const UserDashboard: React.FC = () => {
                           <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                             {service.description}
                           </p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-1">
-                              <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
-                              <span className="text-sm text-gray-600">4.8</span>
-                            </div>
+                          <div className="flex items-center justify-end">
                             <button className="text-teal-600 hover:text-teal-700 font-medium text-sm flex items-center">
                               Book Now
                               <FiArrowRight className="w-4 h-4 ml-1" />

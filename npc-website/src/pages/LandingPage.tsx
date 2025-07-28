@@ -80,11 +80,21 @@ const LandingPage: React.FC = () => {
       }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                <FiShield className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">NPC</span>
+                          <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/images/logo-npc.png" 
+                    alt="NPC Pest Control Logo"
+                    className="w-6 h-6 object-contain"
+                    onError={(e) => {
+                      // Fallback to shield icon if logo fails to load
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <FiShield className="w-5 h-5 text-white hidden" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">NPC</span>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -221,9 +231,19 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true }}
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
-                <div className="h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center">
-                  <FiShield className="w-16 h-16 text-white" />
-                </div>
+                                 <div className="h-48 bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center overflow-hidden">
+                   <img 
+                     src={service.image} 
+                     alt={service.name}
+                     className="w-full h-full object-cover"
+                     onError={(e) => {
+                       // Fallback to shield icon if image fails to load
+                       e.currentTarget.style.display = 'none';
+                       e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                     }}
+                   />
+                   <FiShield className="w-16 h-16 text-white hidden" />
+                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
                   <p className="text-gray-600 mb-4">{service.description}</p>
@@ -266,8 +286,18 @@ const LandingPage: React.FC = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                  <FiShield className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/images/logo-npc.png" 
+                    alt="NPC Pest Control Logo"
+                    className="w-6 h-6 object-contain"
+                    onError={(e) => {
+                      // Fallback to shield icon if logo fails to load
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <FiShield className="w-5 h-5 text-white hidden" />
                 </div>
                 <span className="text-xl font-bold">NPC</span>
               </div>
