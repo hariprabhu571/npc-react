@@ -34,7 +34,7 @@ try {
     }
 
     // First, get the service_id for the service name
-    $stmt_service = $conn->prepare("SELECT service_id FROM services WHERE service_name = ?");
+    $stmt_service = $conn->prepare("SELECT service_id, image_path FROM services WHERE service_name = ?");
     if (!$stmt_service) {
         throw new Exception("Failed to prepare service query: " . $conn->error);
     }
@@ -57,6 +57,7 @@ try {
 
     $service = $result_service->fetch_assoc();
     $service_id = $service['service_id'];
+    $service_image_path = $service['image_path'];
 
     // Now fetch all service details using the actual schema
     $stmt_details = $conn->prepare("
@@ -110,7 +111,8 @@ try {
         if ($service_info === null) {
             $service_info = [
                 'service_name' => $row['service_name'],
-                'service_description' => $row['service_description']
+                'service_description' => $row['service_description'],
+                'image_path' => $service_image_path
             ];
         }
         

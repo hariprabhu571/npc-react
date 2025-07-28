@@ -1,13 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiShield, FiArrowLeft, FiCalendar, FiClock, FiMapPin, FiCheck, FiPlus, FiMinus } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiShield, 
+  FiArrowLeft, 
+  FiCalendar, 
+  FiClock, 
+  FiMapPin, 
+  FiCheck, 
+  FiPlus, 
+  FiMinus,
+  FiStar,
+  FiUsers,
+  FiAward,
+  FiShield as FiShieldIcon,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiInfo,
+  FiTruck,
+  FiClock as FiTimeIcon,
+  FiMapPin as FiLocationIcon,
+  FiPhone,
+  FiMail,
+  FiCreditCard,
+  FiDollarSign,
+  FiPercent,
+  FiGift,
+  FiZap,
+  FiHeart,
+  FiEye,
+  FiEyeOff,
+  FiShare2
+} from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service } from '../types';
 import { apiService } from '../services/api';
 import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 import { useQuery } from 'react-query';
 import toast from 'react-hot-toast';
+
+// Helper function to get image URL
+const getImageUrl = (imagePath?: string): string | null => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+  return `${API_BASE_URL}${imagePath.replace(/^\/+/, '')}`;
+};
+
+
 
 // Local interfaces for this component
 interface ServiceType {
@@ -64,6 +105,8 @@ const ServiceDetails: React.FC = () => {
   const { serviceName } = useParams<{ serviceName: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  console.log('ServiceDetails component - serviceName:', serviceName);
   const [currentStep, setCurrentStep] = useState<'types' | 'details' | 'confirmation'>('types');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
@@ -81,6 +124,14 @@ const ServiceDetails: React.FC = () => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  // Enhanced UI state
+  const [showServiceDetails, setShowServiceDetails] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | null>(null);
+  const [showBenefits, setShowBenefits] = useState(false);
+  const [showProcess, setShowProcess] = useState(false);
+  const [showTestimonials, setShowTestimonials] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'reviews'>('overview');
 
   // Fetch service types
   const { data: serviceTypesData, isLoading: typesLoading, refetch } = useQuery(
@@ -96,6 +147,7 @@ const ServiceDetails: React.FC = () => {
       },
       onSuccess: (data: any) => {
         console.log('API call successful:', data);
+        console.log('Full API response:', JSON.stringify(data, null, 2));
       }
     }
   );
@@ -106,6 +158,9 @@ const ServiceDetails: React.FC = () => {
     if (serviceTypesDataAny?.data) {
       console.log('Setting service types:', serviceTypesDataAny.data);
       console.log('Setting service info:', serviceTypesDataAny.service_info);
+      console.log('Service image path:', serviceTypesDataAny.service_info?.image_path);
+      console.log('Image URL:', getImageUrl(serviceTypesDataAny.service_info?.image_path));
+      console.log('API_BASE_URL:', API_BASE_URL);
       setServiceTypes(serviceTypesDataAny.data || []);
       setServiceInfo(serviceTypesDataAny.service_info);
     }
@@ -143,46 +198,124 @@ const ServiceDetails: React.FC = () => {
   // Get minimum date (today)
   const today = new Date().toISOString().split('T')[0];
 
+  // Enhanced service information
+  const serviceBenefits = [
+    {
+      icon: FiShieldIcon,
+      title: "Professional Expertise",
+      description: "Certified technicians with years of experience in pest control"
+    },
+    {
+      icon: FiAward,
+      title: "Quality Guarantee",
+      description: "90-day warranty on all treatments with follow-up support"
+    },
+    {
+      icon: FiZap,
+      title: "Quick Service",
+      description: "Same-day service available in most areas"
+    },
+    {
+      icon: FiHeart,
+      title: "Safe Chemicals",
+      description: "HACCP certified chemicals safe for your family and pets"
+    }
+  ];
+
+  const serviceProcess = [
+    {
+      step: 1,
+      title: "Thorough Inspection",
+      description: "Our expert conducts a comprehensive inspection of your space to identify all pest entry points and breeding areas.",
+      icon: FiEye
+    },
+    {
+      step: 2,
+      title: "Customized Treatment",
+      description: "Tailored treatment plan using advanced techniques and safe chemicals based on inspection findings.",
+      icon: FiShieldIcon
+    },
+    {
+      step: 3,
+      title: "Follow-up Service",
+      description: "Second visit after 2 weeks to ensure complete elimination and prevent future infestations.",
+      icon: FiCheckCircle
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: "Sarah M.",
+      rating: 5,
+      comment: "Excellent service! The technician was professional and thorough. No more pests in our home.",
+      date: "2 days ago"
+    },
+    {
+      name: "Rajesh K.",
+      rating: 5,
+      comment: "Very satisfied with the pest control service. The team was punctual and the treatment was effective.",
+      date: "1 week ago"
+    },
+    {
+      name: "Priya S.",
+      rating: 4,
+      comment: "Good service and reasonable pricing. Would definitely recommend to others.",
+      date: "2 weeks ago"
+    }
+  ];
+
   const addToCart = (serviceType: ServiceType, pricingField: PricingField) => {
     const cartItemKey = `${serviceType.service_type_id}_${pricingField.id}`;
+    console.log('Adding to cart:', { serviceType, pricingField });
     setCartItems(prev => {
       const existing = prev.find(item => 
         item.service_type_id === serviceType.service_type_id && 
         item.room_size === pricingField.room_size
       );
       if (existing) {
-        return prev.map(item => 
+        const updated = prev.map(item => 
           item.service_type_id === serviceType.service_type_id && item.room_size === pricingField.room_size
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+        console.log('Updated cart items:', updated);
+        return updated;
       } else {
-        return [...prev, { 
+        const newItem = { 
           service_type_id: serviceType.service_type_id,
           service_type_name: serviceType.service_type_name,
           room_size: pricingField.room_size,
           price: pricingField.price,
           quantity: 1 
-        }];
+        };
+        const updated = [...prev, newItem];
+        console.log('Added new cart item:', newItem);
+        console.log('Updated cart items:', updated);
+        return updated;
       }
     });
   };
 
   const removeFromCart = (serviceTypeId: number, roomSize: string) => {
+    console.log('Removing from cart:', { serviceTypeId, roomSize });
     setCartItems(prev => {
       const existing = prev.find(item => 
         item.service_type_id === serviceTypeId && item.room_size === roomSize
       );
       if (existing && existing.quantity > 1) {
-        return prev.map(item => 
+        const updated = prev.map(item => 
           item.service_type_id === serviceTypeId && item.room_size === roomSize
             ? { ...item, quantity: item.quantity - 1 }
             : item
         );
+        console.log('Updated cart items (decreased quantity):', updated);
+        return updated;
       } else {
-        return prev.filter(item => 
+        const updated = prev.filter(item => 
           !(item.service_type_id === serviceTypeId && item.room_size === roomSize)
         );
+        console.log('Updated cart items (removed item):', updated);
+        return updated;
       }
     });
   };
@@ -195,15 +328,25 @@ const ServiceDetails: React.FC = () => {
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    console.log('Subtotal calculation:', { cartItems, subtotal });
+    return subtotal;
   };
 
   const calculateDiscount = () => {
-    return calculateSubtotal() * 0.15; // 15% discount
+    const subtotal = calculateSubtotal();
+    const discount = Math.round(subtotal * 0.15); // 15% discount
+    console.log('Discount calculation:', { subtotal, discount });
+    return discount;
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() - couponDiscount;
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    const total = subtotal - discount - couponDiscount;
+    const finalTotal = Math.max(0, total); // Ensure total is never negative
+    console.log('Total calculation:', { subtotal, discount, couponDiscount, total, finalTotal });
+    return finalTotal;
   };
 
   const applyCoupon = async () => {
@@ -469,448 +612,717 @@ const ServiceDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      {/* Enhanced Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
               <button
-              onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/dashboard')}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <FiArrowLeft className="w-5 h-5" />
               </button>
-            <div className="ml-4">
-              <h1 className="text-xl font-semibold text-gray-900">Complete Booking</h1>
-              <p className="text-sm text-gray-500">{serviceInfo.service_name}</p>
+              <div className="ml-4">
+                <h1 className="text-xl font-semibold text-gray-900">{serviceInfo.service_name}</h1>
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex items-center">
+                    <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-sm text-gray-600 ml-1">4.8</span>
+                  </div>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-sm text-gray-500">2.5K+ bookings</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <FiHeart className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <FiShare2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4">
-            <div className={`flex items-center ${currentStep === 'types' ? 'text-teal-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'types' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
-                1
-              </div>
-              <span className="ml-2 text-sm font-medium">Choose Services</span>
-            </div>
-            <div className={`w-16 h-0.5 ${currentStep === 'details' || currentStep === 'confirmation' ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
-            <div className={`flex items-center ${currentStep === 'details' ? 'text-teal-600' : currentStep === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'details' || currentStep === 'confirmation' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
-                2
-              </div>
-              <span className="ml-2 text-sm font-medium">Details</span>
-            </div>
-            <div className={`w-16 h-0.5 ${currentStep === 'confirmation' ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
-            <div className={`flex items-center ${currentStep === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'confirmation' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
-                3
-              </div>
-              <span className="ml-2 text-sm font-medium">Confirm</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 1: Choose Service Types */}
-        {currentStep === 'types' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Choose Your Services</h2>
-              
-              {serviceTypes.length === 0 ? (
-                <div className="text-center py-8">
-                  <FiShield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No service types available for this service.</p>
-            </div>
-              ) : (
-                <div className="space-y-4">
-                  {serviceTypes.map((serviceType) => (
-                    <div key={serviceType.service_type_id} className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900 mb-3">{serviceType.service_type_name}</h3>
-                      
-                      {serviceType.pricing.map((pricingField: PricingField) => (
-                        <div key={pricingField.id} className="flex items-center justify-between py-2 border-t border-gray-100">
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-600">Room Size: {pricingField.room_size}</p>
-                            <p className="text-lg font-bold text-teal-600">₹{pricingField.price}</p>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            {getCartItemQuantity(serviceType.service_type_id, pricingField.room_size) > 0 && (
-                              <>
-                                <button
-                                  onClick={() => removeFromCart(serviceType.service_type_id, pricingField.room_size)}
-                                  className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
-                                >
-                                  <FiMinus className="w-4 h-4" />
-                                </button>
-                                <span className="text-lg font-semibold text-gray-900 w-8 text-center">
-                                  {getCartItemQuantity(serviceType.service_type_id, pricingField.room_size)}
-                                </span>
-                              </>
-                            )}
-                            <button
-                              onClick={() => addToCart(serviceType, pricingField)}
-                              className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center hover:bg-teal-200 transition-colors"
-                            >
-                              <FiPlus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                ))}
-              </div>
-              )}
-            </div>
-
-            {/* Cart Summary */}
-            {cartItems.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Selected Services</h3>
-                <div className="space-y-2">
-                  {cartItems.map((item) => (
-                    <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center">
-                      <span className="text-gray-700">{item.service_type_name} ({item.room_size}) x {item.quantity}</span>
-                      <span className="font-semibold">₹{item.price * item.quantity}</span>
-                    </div>
-                  ))}
-                  <div className="border-t pt-2 mt-4">
-                    <div className="flex justify-between items-center font-semibold text-lg">
-                      <span>Total:</span>
-                      <span className="text-teal-600">₹{calculateSubtotal()}</span>
-              </div>
-              </div>
-              </div>
-              </div>
-            )}
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleProceedToDetails}
-                disabled={cartItems.length === 0}
-                className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                Proceed to Details
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 2: Booking Details */}
-        {currentStep === 'details' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Details</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Date Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FiCalendar className="inline w-4 h-4 mr-1" />
-                  Select Date
-                </label>
-                <input
-                  type="date"
-                  min={today}
-                    value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
-                    onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-
-              {/* Time Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FiClock className="inline w-4 h-4 mr-1" />
-                  Select Time
-                </label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                >
-                  <option value="">Choose a time slot</option>
-                  {timeSlots.map((time) => (
-                    <option key={time} value={time}>{time}</option>
-                  ))}
-                </select>
-                </div>
-              </div>
-
-              {/* Address */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FiMapPin className="inline w-4 h-4 mr-1" />
-                  Service Address
-                </label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter your complete address"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-
-              {/* Special Notes */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Special Notes (Optional)
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any special instructions or requirements"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-
-              {/* Coupon Section */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                  </svg>
-                  Apply Coupon
-                </h3>
-                
-                {!isCouponApplied ? (
-                  <div className="flex space-x-3">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Enter coupon code"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    />
-                    <button
-                      onClick={applyCoupon}
-                      className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
-                    >
-                      Apply
-                    </button>
-                  </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Service Hero Section with Image */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6"
+            >
+              <div className="relative h-64 bg-gradient-to-br from-teal-500 to-teal-700">
+                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                {serviceInfo.image_path && getImageUrl(serviceInfo.image_path) ? (
+                  <img
+                    src={getImageUrl(serviceInfo.image_path)!}
+                    alt={serviceInfo.service_name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log('Image failed to load:', e.currentTarget.src);
+                      console.log('Original image path:', serviceInfo.image_path);
+                      console.log('Constructed URL:', getImageUrl(serviceInfo.image_path));
+                      // Fallback to gradient background if image fails to load
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', serviceInfo.image_path);
+                    }}
+                  />
                 ) : (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <div>
-                          <p className="font-medium text-green-800">Coupon Applied: {appliedCouponCode}</p>
-                          <p className="text-sm text-green-600">You saved ₹{couponDiscount.toFixed(0)}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={removeCoupon}
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FiShield className="w-16 h-16 text-white" />
+                  </div>
+                                                  )}
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="text-center text-white">
+                                      <h2 className="text-3xl font-bold mb-2">{serviceInfo.service_name}</h2>
+                                    </div>
+                                  </div>
+                {/* Service Image Placeholder - only show if no image */}
+                {!serviceInfo.image_path && (
+                  <div className="absolute top-4 right-4 w-24 h-24 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <FiShield className="w-12 h-12 text-white" />
                   </div>
                 )}
               </div>
-
-              {/* Payment Method */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  Payment Method
-                </h3>
-                
-                <div className="space-y-3">
-                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="cash"
-                      checked={selectedPaymentMethod === 'cash'}
-                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
-                    />
-                    <div className="ml-3">
-                      <p className="font-medium text-gray-900">Cash on Delivery</p>
-                      <p className="text-sm text-gray-500">Pay when service is completed</p>
-                    </div>
-                  </label>
-                  
-                  <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="online"
-                      checked={selectedPaymentMethod === 'online'}
-                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
-                    />
-                    <div className="ml-3">
-                      <p className="font-medium text-gray-900">Online Payment</p>
-                      <p className="text-sm text-gray-500">Pay securely online</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Terms and Conditions */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Terms & Conditions
-                </h3>
-                
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Service will be provided on the scheduled date and time</li>
-                    <li>• Payment is due upon completion of service</li>
-                    <li>• Cancellation must be made 24 hours in advance</li>
-                    <li>• Additional charges may apply for extra requirements</li>
-                    <li>• Service guarantee as per company policy</li>
-                  </ul>
-                </div>
-                
-                <label className="flex items-start cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mt-1"
-                  />
-                  <span className="ml-3 text-sm text-gray-700">
-                    I agree to the terms and conditions and privacy policy
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <button
-                onClick={() => setCurrentStep('types')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleProceedToConfirmation}
-                className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
-              >
-                Review & Confirm
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 3: Confirmation */}
-        {currentStep === 'confirmation' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Summary</h2>
               
-              <div className="space-y-4">
-                <div className="border-b pb-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Selected Services</h3>
-                  {cartItems.map((item) => (
-                    <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center py-1">
-                      <span className="text-gray-700">{item.service_type_name} ({item.room_size}) x {item.quantity}</span>
-                      <span className="font-semibold">₹{item.price * item.quantity}</span>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FiTimeIcon className="w-4 h-4 mr-1" />
+                      <span>2-3 hours</span>
                     </div>
-                  ))}
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FiTruck className="w-4 h-4 mr-1" />
+                      <span>Same day available</span>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FiShieldIcon className="w-4 h-4 mr-1" />
+                      <span>90-day warranty</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-teal-600">₹{serviceTypes[0]?.pricing[0]?.price || 999}</div>
+                    <div className="text-sm text-gray-500">Starting price</div>
+                  </div>
                 </div>
+              </div>
+            </motion.div>
 
-                <div className="border-b pb-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Booking Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Date:</span>
-                      <span className="text-gray-900">{selectedDate ? selectedDate.toLocaleDateString() : 'Not selected'}</span>
+            {/* Service Benefits */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm p-6 mb-6"
+            >
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Why Choose Our Service?</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {serviceBenefits.map((benefit, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl"
+                  >
+                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <benefit.icon className="w-5 h-5 text-teal-600" />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Time:</span>
-                      <span className="text-gray-900">{selectedTime}</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm">{benefit.title}</h4>
+                      <p className="text-xs text-gray-600 mt-1">{benefit.description}</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Address:</span>
-                      <span className="text-gray-900">{address}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Service Process */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm p-6 mb-6"
+            >
+              <h3 className="text-xl font-bold text-gray-900 mb-4">How it works</h3>
+              <div className="space-y-4">
+                {serviceProcess.map((process, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start space-x-4"
+                  >
+                    <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {process.step}
                     </div>
-                    {notes && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Notes:</span>
-                        <span className="text-gray-900">{notes}</span>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{process.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{process.description}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Progress Steps */}
+            <div className="mb-8">
+              <div className="flex items-center justify-center space-x-4">
+                <div className={`flex items-center ${currentStep === 'types' ? 'text-teal-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'types' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
+                    1
+                  </div>
+                  <span className="ml-2 text-sm font-medium">Choose Services</span>
+                </div>
+                <div className={`w-16 h-0.5 ${currentStep === 'details' || currentStep === 'confirmation' ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
+                <div className={`flex items-center ${currentStep === 'details' ? 'text-teal-600' : currentStep === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'details' || currentStep === 'confirmation' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
+                    2
+                  </div>
+                  <span className="ml-2 text-sm font-medium">Details</span>
+                </div>
+                <div className={`w-16 h-0.5 ${currentStep === 'confirmation' ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
+                <div className={`flex items-center ${currentStep === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'confirmation' ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-300'}`}>
+                    3
+                  </div>
+                  <span className="ml-2 text-sm font-medium">Confirm</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 1: Choose Service Types */}
+            {currentStep === 'types' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900">Choose Your Services</h2>
+                    <div className="text-sm text-gray-500">
+                      {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} selected
+                    </div>
+                  </div>
+                  
+                  {serviceTypes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FiShield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No service types available for this service.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {serviceTypes.map((serviceType) => (
+                        <motion.div
+                          key={serviceType.service_type_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border border-gray-200 rounded-xl p-6 hover:border-teal-300 transition-colors"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 text-lg">{serviceType.service_type_name}</h3>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="text-sm text-gray-600">4.8</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {serviceType.pricing.map((pricingField: PricingField) => (
+                              <motion.div
+                                key={pricingField.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100"
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                                    <p className="font-medium text-gray-900">{pricingField.room_size}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="text-right">
+                                    <p className="text-2xl font-bold text-teal-600">₹{pricingField.price}</p>
+                                    <p className="text-xs text-gray-500">per treatment</p>
+                                  </div>
+                                  <div className="flex items-center space-x-3">
+                                    {getCartItemQuantity(serviceType.service_type_id, pricingField.room_size) > 0 && (
+                                      <>
+                                        <button
+                                          onClick={() => removeFromCart(serviceType.service_type_id, pricingField.room_size)}
+                                          className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors"
+                                        >
+                                          <FiMinus className="w-4 h-4" />
+                                        </button>
+                                        <span className="text-lg font-semibold text-gray-900 w-8 text-center">
+                                          {getCartItemQuantity(serviceType.service_type_id, pricingField.room_size)}
+                                        </span>
+                                      </>
+                                    )}
+                                    <button
+                                      onClick={() => addToCart(serviceType, pricingField)}
+                                      className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center hover:bg-teal-200 transition-colors"
+                                    >
+                                      <FiPlus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 2: Booking Details */}
+            {currentStep === 'details' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Details</h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Date Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FiCalendar className="inline w-4 h-4 mr-1" />
+                        Select Date
+                      </label>
+                      <input
+                        type="date"
+                        min={today}
+                        value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                        onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : null)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
+
+                    {/* Time Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <FiClock className="inline w-4 h-4 mr-1" />
+                        Select Time
+                      </label>
+                      <select
+                        value={selectedTime}
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      >
+                        <option value="">Choose a time slot</option>
+                        {timeSlots.map((time) => (
+                          <option key={time} value={time}>{time}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FiMapPin className="inline w-4 h-4 mr-1" />
+                      Service Address
+                    </label>
+                    <textarea
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Enter your complete address"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+
+                  {/* Special Notes */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Special Notes (Optional)
+                    </label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Any special instructions or requirements"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+
+                  {/* Coupon Section */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                      </svg>
+                      Apply Coupon
+                    </h3>
+                    
+                    {!isCouponApplied ? (
+                      <div className="flex space-x-3">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder="Enter coupon code"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        />
+                        <button
+                          onClick={applyCoupon}
+                          className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <div>
+                              <p className="font-medium text-green-800">Coupon Applied: {appliedCouponCode}</p>
+                              <p className="text-sm text-green-600">You saved ₹{couponDiscount.toFixed(0)}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={removeCoupon}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">₹{calculateSubtotal()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Discount (15%):</span>
-                    <span className="font-semibold text-green-600">-₹{calculateDiscount()}</span>
-                  </div>
-                  {isCouponApplied && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Coupon Discount ({appliedCouponCode}):</span>
-                      <span className="font-semibold text-green-600">-₹{couponDiscount.toFixed(0)}</span>
+                  {/* Payment Method */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Payment Method
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="cash"
+                          checked={selectedPaymentMethod === 'cash'}
+                          onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                        />
+                        <div className="ml-3">
+                          <p className="font-medium text-gray-900">Cash on Delivery</p>
+                          <p className="text-sm text-gray-500">Pay when service is completed</p>
+                        </div>
+                      </label>
+                      
+                      <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="online"
+                          checked={selectedPaymentMethod === 'online'}
+                          onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                          className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                        />
+                        <div className="ml-3">
+                          <p className="font-medium text-gray-900">Online Payment</p>
+                          <p className="text-sm text-gray-500">Pay securely online</p>
+                        </div>
+                      </label>
                     </div>
-                  )}
-                  <div className="flex justify-between text-lg font-bold text-teal-600 border-t pt-2">
-                    <span>Total Amount:</span>
-                    <span>₹{calculateTotal().toFixed(0)}</span>
+                  </div>
+
+                  {/* Terms and Conditions */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Terms & Conditions
+                    </h3>
+                    
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li>• Service will be provided on the scheduled date and time</li>
+                        <li>• Payment is due upon completion of service</li>
+                        <li>• Cancellation must be made 24 hours in advance</li>
+                        <li>• Additional charges may apply for extra requirements</li>
+                        <li>• Service guarantee as per company policy</li>
+                      </ul>
+                    </div>
+                    
+                    <label className="flex items-start cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 mt-1"
+                      />
+                      <span className="ml-3 text-sm text-gray-700">
+                        I agree to the terms and conditions and privacy policy
+                      </span>
+                    </label>
                   </div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            )}
 
-            <div className="flex justify-between">
-              <button
-                onClick={() => setCurrentStep('details')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            {/* Step 3: Confirmation */}
+            {currentStep === 'confirmation' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
               >
-                Back
-              </button>
-              <button
-                onClick={handleBooking}
-                disabled={isBooking}
-                className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {isBooking ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating Booking...
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Summary</h2>
+                  
+                  <div className="space-y-4">
+                    <div className="border-b pb-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">Selected Services</h3>
+                      {cartItems.map((item) => (
+                        <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center py-1">
+                          <span className="text-gray-700">{item.service_type_name} ({item.room_size}) x {item.quantity}</span>
+                          <span className="font-semibold">₹{item.price * item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-b pb-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">Booking Details</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="text-gray-900">{selectedDate ? selectedDate.toLocaleDateString() : 'Not selected'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Time:</span>
+                          <span className="text-gray-900">{selectedTime}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Address:</span>
+                          <span className="text-gray-900">{address}</span>
+                        </div>
+                        {notes && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Notes:</span>
+                            <span className="text-gray-900">{notes}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="font-semibold">₹{calculateSubtotal()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Discount (15%):</span>
+                        <span className="font-semibold text-green-600">-₹{calculateDiscount()}</span>
+                      </div>
+                      {isCouponApplied && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Coupon Discount ({appliedCouponCode}):</span>
+                          <span className="font-semibold text-green-600">-₹{couponDiscount.toFixed(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-lg font-bold text-teal-600 border-t pt-2">
+                        <span>Total Amount:</span>
+                        <span>₹{calculateTotal()}</span>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  `Confirm Booking - ₹${calculateTotal()}`
-                )}
-              </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Sticky Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              {/* Cart Summary */}
+              {cartItems.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Selected Services</h3>
+                    <div className="text-sm text-teal-600 font-medium">
+                      {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3 mb-4">
+                    {cartItems.map((item) => (
+                      <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <span className="font-medium text-gray-900 text-sm">{item.service_type_name}</span>
+                          <p className="text-xs text-gray-600">{item.room_size} x {item.quantity}</p>
+                        </div>
+                        <span className="font-semibold text-teal-600">₹{item.price * item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-semibold">₹{calculateSubtotal()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Discount (15%):</span>
+                      <span className="font-semibold text-green-600">-₹{calculateDiscount()}</span>
+                    </div>
+                    {isCouponApplied && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Coupon:</span>
+                        <span className="font-semibold text-green-600">-₹{couponDiscount.toFixed(0)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <span className="text-lg font-bold text-gray-900">Total:</span>
+                      <span className="text-xl font-bold text-teal-600">₹{calculateTotal()}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Action Button */}
+              {currentStep === 'types' && cartItems.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-lg p-6"
+                >
+                  <button
+                    onClick={handleProceedToDetails}
+                    className="w-full px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-teal-800 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    Continue to Details
+                  </button>
+                </motion.div>
+              )}
+
+              {currentStep === 'details' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-lg p-6"
+                >
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setCurrentStep('types')}
+                      className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Back to Services
+                    </button>
+                    <button
+                      onClick={handleProceedToConfirmation}
+                      className="w-full px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-teal-800 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                      Review & Confirm
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {currentStep === 'confirmation' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-lg p-6"
+                >
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setCurrentStep('details')}
+                      className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Back to Details
+                    </button>
+                    <button
+                      onClick={handleBooking}
+                      disabled={isBooking}
+                      className="w-full px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-teal-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                      {isBooking ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Creating Booking...
+                        </div>
+                      ) : (
+                        `Confirm Booking - ₹${calculateTotal()}`
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Service Image */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl shadow-lg p-6 mt-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Preview</h3>
+                <div className="relative h-48 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl overflow-hidden">
+                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                  {serviceInfo.image_path && getImageUrl(serviceInfo.image_path) ? (
+                    <img
+                      src={getImageUrl(serviceInfo.image_path)!}
+                      alt={serviceInfo.service_name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        console.log('Sidebar image failed to load:', e.currentTarget.src);
+                        console.log('Original image path:', serviceInfo.image_path);
+                        console.log('Constructed URL:', getImageUrl(serviceInfo.image_path));
+                        // Fallback to icon if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                      onLoad={() => {
+                        console.log('Sidebar image loaded successfully:', serviceInfo.image_path);
+                      }}
+                    />
+                  ) : null}
+                  <div className={`absolute inset-0 flex items-center justify-center ${serviceInfo.image_path ? 'hidden' : ''}`}>
+                    <FiShield className="w-16 h-16 text-white" />
+                  </div>
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <p className="text-sm font-medium">{serviceInfo.service_name}</p>
+                    <p className="text-xs opacity-90">Professional Service</p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );
