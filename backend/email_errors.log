@@ -1,0 +1,113 @@
+[02-Aug-2025 15:12:13 UTC] Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508023369","service_name":"Cockroach & Ants General Pest Control","total_amount":1348.2,"service_date":"2025-08-02","service_time":"4:00 PM - 6:00 PM","address":"assdadf"}
+[02-Aug-2025 15:12:13 UTC] Processing email for: hariprabhu571@gmail.com, Booking: BK202508023369, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 15:12:13 UTC] Attempting to send email to: hariprabhu571@gmail.com
+[02-Aug-2025 15:12:13 UTC] Subject: NPC Services - Invoice for Booking #BK202508023369
+[02-Aug-2025 15:12:13 UTC] Headers: MIME-Version: 1.0
+Content-type: text/html; charset=UTF-8
+From: NPC Services <paymentnpc@gmail.com>
+Reply-To: support@npcservices.com
+X-Mailer: PHP/8.2.28
+[02-Aug-2025 15:12:14 UTC] Mail send result: SUCCESS
+[02-Aug-2025 15:12:14 UTC] Database log result: SUCCESS
+[02-Aug-2025 15:22:25 UTC] Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508022886","service_name":"Cockroach & Ants General Pest Control","total_amount":2775,"service_date":"2025-08-02","service_time":"2:00 PM - 4:00 PM","address":"asad","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"5 BHK","price":1350,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"4 BHK","price":1250,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"3 BHK","price":1100,"quantity":1}],"discount":925,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 15:22:25 UTC] Processing email for: hariprabhu571@gmail.com, Booking: BK202508022886, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 15:22:25 UTC] Attempting to send email to: hariprabhu571@gmail.com
+[02-Aug-2025 15:22:25 UTC] Subject: NPC Services - Invoice for Booking #BK202508022886
+[02-Aug-2025 15:22:25 UTC] Headers: MIME-Version: 1.0
+Content-type: text/html; charset=UTF-8
+From: NPC Services <paymentnpc@gmail.com>
+Reply-To: support@npcservices.com
+X-Mailer: PHP/8.2.28
+[02-Aug-2025 15:22:25 UTC] Mail send result: SUCCESS
+[02-Aug-2025 15:22:25 UTC] Database log result: SUCCESS
+[02-Aug-2025 15:23:36 UTC] Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508021510","service_name":"Cockroach & Ants General Pest Control","total_amount":2512.1,"service_date":"2025-08-09","service_time":"11:00 AM - 1:00 PM","address":"adsd","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"4 BHK","price":1250,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"3 BHK","price":1100,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1}],"discount":836.9,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 15:23:36 UTC] Processing email for: hariprabhu571@gmail.com, Booking: BK202508021510, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 15:23:36 UTC] PDF generation not available, will send HTML email instead
+[02-Aug-2025 15:23:36 UTC] Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 15:23:36 UTC] Subject: NPC Services - Invoice for Booking #BK202508021510
+[02-Aug-2025 15:23:36 UTC] Headers: MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+From: NPC Services <paymentnpc@gmail.com>
+Reply-To: support@npcservices.com
+X-Mailer: PHP/8.2.28
+[02-Aug-2025 15:23:37 UTC] Mail send result: SUCCESS
+[02-Aug-2025 15:23:37 UTC] Database log result: SUCCESS
+[02-Aug-2025 15:45:41 UTC] Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508023691","service_name":"Cockroach & Ants General Pest Control","total_amount":1762,"service_date":"2025-08-02","service_time":"9:00 AM - 11:00 AM","address":"sdasd","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"4 BHK","price":1250,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"3 BHK","price":1100,"quantity":1}],"discount":588,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 15:45:41 UTC] Processing email for: hariprabhu571@gmail.com, Booking: BK202508023691, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 15:45:41 UTC] Starting PDF generation for booking: BK202508023691
+[02-Aug-2025 15:45:41 UTC] HTML content generated for PDF, length: 5360
+[02-Aug-2025 15:45:41 UTC] shell_exec function is not available
+[02-Aug-2025 15:45:41 UTC] PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 15:45:41 UTC] Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 15:45:41 UTC] Subject: NPC Services - Invoice for Booking #BK202508023691
+[02-Aug-2025 15:45:41 UTC] Headers: MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+From: NPC Services <paymentnpc@gmail.com>
+Reply-To: support@npcservices.com
+X-Mailer: PHP/8.2.28
+[02-Aug-2025 15:45:42 UTC] Mail send result: SUCCESS
+[02-Aug-2025 15:45:42 UTC] Database log result: SUCCESS
+[02-Aug-2025 15:54:42 UTC] Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508023476","service_name":"Cockroach & Ants General Pest Control","total_amount":2888,"service_date":"2025-08-02","service_time":"11:00 AM - 1:00 PM","address":"ad","cart_items":[{"service_type_id":87,"service_type_name":"Bungalow Service","room_size":"+ 5000 Sq.ft","price":1999,"quantity":1},{"service_type_id":87,"service_type_name":"Bungalow Service","room_size":"2000 - 3000 Sq.ft","price":1399,"quantity":1}],"discount":510,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 15:54:42 UTC] Processing email for: hariprabhu571@gmail.com, Booking: BK202508023476, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 15:54:42 UTC] Starting PDF generation for booking: BK202508023476
+[02-Aug-2025 15:54:42 UTC] HTML content generated for PDF, length: 5353
+[02-Aug-2025 15:54:42 UTC] shell_exec function is not available
+[02-Aug-2025 15:54:42 UTC] PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 15:54:42 UTC] Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 15:54:42 UTC] Subject: NPC Services - Invoice for Booking #BK202508023476
+[02-Aug-2025 15:54:42 UTC] Headers: MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+From: NPC Services <paymentnpc@gmail.com>
+Reply-To: support@npcservices.com
+X-Mailer: PHP/8.2.28
+[02-Aug-2025 15:54:43 UTC] Mail send result: SUCCESS
+[02-Aug-2025 15:54:43 UTC] Database log result: SUCCESS
+[02-Aug-2025 16:35:16 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508022086","service_name":"Cockroach & Ants General Pest Control","total_amount":1528,"service_date":"2025-08-02","service_time":"11:00 AM - 1:00 PM","address":"dsf","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"1 BHK","price":799,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1}],"discount":270,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 16:35:16 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508022086, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 16:35:16 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 16:35:16 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 16:35:16 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 16:35:17 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 16:35:17 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 16:44:03 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508023104","service_name":"Cockroach & Ants General Pest Control","total_amount":1358,"service_date":"2025-08-02","service_time":"11:00 AM - 1:00 PM","address":"xcZC","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"1 BHK","price":799,"quantity":2}],"discount":240,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 16:44:03 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508023104, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 16:44:03 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 16:44:03 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 16:44:03 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 16:44:04 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 16:44:04 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 17:00:17 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508029850","service_name":"Cockroach & Ants General Pest Control","total_amount":2210,"service_date":"2025-08-09","service_time":"9:00 AM - 11:00 AM","address":"sd","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"5 BHK","price":1350,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"4 BHK","price":1250,"quantity":1}],"discount":390,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 17:00:17 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508029850, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 17:00:17 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 17:00:17 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 17:00:17 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 17:00:18 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 17:00:18 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 18:16:01 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508029411","service_name":"Cockroach & Ants General Pest Control","total_amount":2463,"service_date":"2025-08-02","service_time":"2:00 PM - 4:00 PM","address":"zcd","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"1 BHK","price":799,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"3 BHK","price":1100,"quantity":1}],"discount":435,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 18:16:01 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508029411, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 18:16:02 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 18:16:02 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 18:16:02 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 18:16:02 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 18:16:02 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 18:29:31 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508025514","service_name":"Cockroach & Ants General Pest Control","total_amount":1784,"service_date":"2025-08-02","service_time":"11:00 AM - 1:00 PM","address":"SZ","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"3 BHK","price":1100,"quantity":1}],"discount":315,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 18:29:31 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508025514, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 18:29:31 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 18:29:31 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 18:29:31 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 18:29:32 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 18:29:32 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 18:40:33 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508021338","service_name":"Cockroach & Ants General Pest Control","total_amount":1528,"service_date":"2025-08-09","service_time":"2:00 PM - 4:00 PM","address":"cxv","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"1 BHK","price":799,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1}],"discount":270,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 18:40:33 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508021338, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 18:40:33 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 18:40:33 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 18:40:33 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 18:40:34 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 18:40:34 UTC] PDFShift email - Database log result: SUCCESS
+[02-Aug-2025 18:53:06 UTC] PDFShift email - Received input: {"user_email":"hariprabhu571@gmail.com","user_name":"Hari Raja Prabhu","booking_id":"BK202508029378","service_name":"Cockroach & Ants General Pest Control","total_amount":1528,"service_date":"2025-08-02","service_time":"11:00 AM - 1:00 PM","address":"aS","cart_items":[{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"1 BHK","price":799,"quantity":1},{"service_type_id":79,"service_type_name":"Appartment Service","room_size":"2 BHK","price":999,"quantity":1}],"discount":270,"taxes":0,"payment_status":"Pending"}
+[02-Aug-2025 18:53:06 UTC] PDFShift email - Processing email for: hariprabhu571@gmail.com, Booking: BK202508029378, Service: Cockroach & Ants General Pest Control
+[02-Aug-2025 18:53:07 UTC] PDFShift: Failed to generate PDF. HTTP Code: 404, Response: {"success":false,"error":"Please use the latest endpoint, \"/v3/convert/pdf\".","code":404}
+[02-Aug-2025 18:53:07 UTC] PDFShift PDF generation result: FAILED - will send HTML email
+[02-Aug-2025 18:53:07 UTC] PDFShift email - Attempting to send email HTML only to: hariprabhu571@gmail.com
+[02-Aug-2025 18:53:07 UTC] PDFShift email - Mail send result: SUCCESS
+[02-Aug-2025 18:53:07 UTC] PDFShift email - Database log result: SUCCESS

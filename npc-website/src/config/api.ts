@@ -52,6 +52,9 @@ export const API_ENDPOINTS = {
   ADMIN_ORDERS: 'admin_orders.php',
   ASSIGN_TECHNICIAN: 'assign_technicians.php',
   RESET_PASSWORD: 'reset_password.php',
+
+  // Email
+  SEND_INVOICE_EMAIL: 'send_invoice_email.php',
 };
 
 export function getApiUrl(endpoint: string) {

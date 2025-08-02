@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+// @ts-ignore
+import html2canvas from 'html2canvas';
+// @ts-ignore
+import jsPDF from 'jspdf';
 import { 
   FiShield, 
   FiArrowLeft, 
@@ -594,42 +598,57 @@ const ServiceDetails: React.FC = () => {
         // Also store a timestamp to ensure fresh data
         localStorage.setItem('invoiceDataTimestamp', Date.now().toString());
         
-        toast.success('Booking created successfully! Opening invoice in new tab...');
+        // Open invoice page in new tab
+        const invoiceUrl = `/invoice/${bookingId}`;
+        const newWindow = window.open(invoiceUrl, '_blank');
         
-        // Small delay to ensure booking is fully processed
-        setTimeout(() => {
-          // Open invoice page in new tab
-          const invoiceUrl = `${window.location.origin}/invoice`;
-          console.log('ServiceDetails: Opening invoice URL:', invoiceUrl);
-          const newTab = window.open(invoiceUrl, '_blank');
+        if (!newWindow) {
+          console.warn('Popup blocked. Invoice page could not be opened.');
+          toast.error('Please allow popups to view the invoice');
+        }
+        
+        // Generate PDF and send invoice email with attachment
+        try {
+          console.log('ServiceDetails: Generating PDF for invoice...');
+          const pdfBase64 = await generateInvoicePDF(invoiceData);
+          console.log('ServiceDetails: PDF generated successfully');
           
-          // Check if popup was blocked
-          if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
-            console.log('ServiceDetails: Popup was blocked');
-            toast.error('Popup blocked! Invoice will be available in your bookings. Please allow popups for automatic download.', {
-              duration: 5000,
-              style: {
-                background: '#fef3c7',
-                color: '#92400e',
-                border: '1px solid #f59e0b'
-              }
-            });
-            // Still redirect to bookings page
-            navigate('/bookings');
-          } else {
-            console.log('ServiceDetails: Popup opened successfully');
-            toast.success('Invoice opened in new tab and will download automatically!', {
-              duration: 3000,
+          console.log('ServiceDetails: Sending invoice email with PDF attachment...');
+          const emailSent = await sendInvoiceEmailWithPDF(invoiceData, pdfBase64);
+          
+          if (emailSent) {
+            toast.success('Booking created successfully! Invoice email with PDF attachment sent to your email address.', {
+              duration: 4000,
               style: {
                 background: '#d1fae5',
                 color: '#065f46',
                 border: '1px solid #10b981'
               }
             });
-            // Redirect current page to bookings page
-            navigate('/bookings');
+          } else {
+            toast.success('Booking created successfully! Invoice will be available in your bookings.', {
+              duration: 4000,
+              style: {
+                background: '#d1fae5',
+                color: '#065f46',
+                border: '1px solid #10b981'
+              }
+            });
           }
-        }, 1500); // Increased delay to give more time for the popup
+        } catch (emailError) {
+          console.error('ServiceDetails: PDF generation or email sending failed:', emailError);
+          toast.success('Booking created successfully! Invoice will be available in your bookings.', {
+            duration: 4000,
+            style: {
+              background: '#d1fae5',
+              color: '#065f46',
+              border: '1px solid #10b981'
+            }
+          });
+        }
+        
+        // Redirect to bookings page
+        navigate('/bookings');
       } else {
         toast.error(responseData.message || 'Booking creation failed');
       }
@@ -665,6 +684,208 @@ const ServiceDetails: React.FC = () => {
       // Don't fail the booking for payment update issues
     }
   };
+
+  // Function to generate PDF using frontend's exact format
+  const generateInvoicePDF = async (invoiceData: any): Promise<string> => {
+    try {
+      // Create a temporary div to render the invoice
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '800px';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.padding = '40px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '14px';
+      tempDiv.style.lineHeight = '1.6';
+      tempDiv.style.color = '#333';
+      
+      // Generate the invoice HTML content
+      const invoiceHTML = `
+        <div style="max-width: 800px; margin: 0 auto; background: white; padding: 40px; font-family: Arial, sans-serif;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #0d9488; padding-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+              <img src="/images/logo-npc.png" alt="NPC Logo" style="height: 60px; margin-right: 20px;">
+              <div>
+                <h1 style="margin: 0; color: #0d9488; font-size: 28px; font-weight: bold;">NPC Services</h1>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Professional Pest Control Services</p>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+              <div style="text-align: left;">
+                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">INVOICE</h2>
+                <p style="margin: 5px 0; color: #666;"><strong>Invoice #:</strong> ${invoiceData.booking.booking_id}</p>
+                <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+              </div>
+              <div style="text-align: right;">
+                <div style="display: inline-block; padding: 8px 16px; background: ${invoiceData.booking.payment_status === 'paid' ? '#10b981' : '#f59e0b'}; color: white; border-radius: 4px; font-weight: bold; font-size: 12px;">
+                  ${invoiceData.booking.payment_status.toUpperCase()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer and Service Details -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+            <div>
+              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Bill To</h3>
+              <p style="margin: 5px 0; color: #333;"><strong>${invoiceData.user.name}</strong></p>
+              <p style="margin: 5px 0; color: #666;">${invoiceData.user.email}</p>
+              <p style="margin: 5px 0; color: #666;">${invoiceData.user.phone}</p>
+              <p style="margin: 5px 0; color: #666;">${invoiceData.user.address}</p>
+            </div>
+            <div>
+              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Service Details</h3>
+              <p style="margin: 5px 0; color: #333;"><strong>Service:</strong> ${invoiceData.booking.service_name}</p>
+              <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${invoiceData.booking.service_date}</p>
+              <p style="margin: 5px 0; color: #666;"><strong>Time:</strong> ${invoiceData.booking.service_time}</p>
+              <p style="margin: 5px 0; color: #666;"><strong>Payment Method:</strong> ${invoiceData.booking.payment_mode}</p>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div style="margin-bottom: 30px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #0d9488;">
+                  <th style="padding: 15px; text-align: left; color: #333; font-weight: bold;">Service</th>
+                  <th style="padding: 15px; text-align: center; color: #333; font-weight: bold;">Room Size</th>
+                  <th style="padding: 15px; text-align: center; color: #333; font-weight: bold;">Quantity</th>
+                  <th style="padding: 15px; text-align: right; color: #333; font-weight: bold;">Price</th>
+                  <th style="padding: 15px; text-align: right; color: #333; font-weight: bold;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoiceData.booking.cart_items.map((item: any) => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px; text-align: left; color: #333;">${item.service_type_name}</td>
+                    <td style="padding: 15px; text-align: center; color: #666;">${item.room_size}</td>
+                    <td style="padding: 15px; text-align: center; color: #666;">${item.quantity}</td>
+                    <td style="padding: 15px; text-align: right; color: #666;">₹${item.price}</td>
+                    <td style="padding: 15px; text-align: right; color: #333; font-weight: bold;">₹${item.price * item.quantity}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Payment Summary -->
+          <div style="margin-left: auto; width: 300px;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">Payment Summary</h3>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="color: #666;">Subtotal:</span>
+                <span style="color: #333; font-weight: bold;">₹${invoiceData.booking.item_total}</span>
+              </div>
+              ${invoiceData.booking.discount > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                  <span style="color: #666;">Discount:</span>
+                  <span style="color: #10b981; font-weight: bold;">-₹${invoiceData.booking.discount}</span>
+                </div>
+              ` : ''}
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="color: #666;">Taxes:</span>
+                <span style="color: #333; font-weight: bold;">₹${invoiceData.booking.taxes}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #0d9488; font-size: 18px; font-weight: bold;">
+                <span style="color: #333;">Total:</span>
+                <span style="color: #0d9488;">₹${invoiceData.booking.total_amount}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px;">
+            <p style="margin: 5px 0;">Thank you for choosing NPC Services!</p>
+            <p style="margin: 5px 0;">For any queries, contact us at paymentnpc@gmail.com</p>
+            <p style="margin: 5px 0;">This is a computer-generated invoice.</p>
+          </div>
+        </div>
+      `;
+      
+      tempDiv.innerHTML = invoiceHTML;
+      document.body.appendChild(tempDiv);
+      
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate PDF
+      const canvas = await html2canvas(tempDiv, {
+        background: 'white',
+        width: 800,
+        height: tempDiv.scrollHeight,
+        useCORS: true,
+        allowTaint: true
+      });
+      
+      // Remove the temporary div
+      document.body.removeChild(tempDiv);
+      
+      // Convert to PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Convert to base64
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+      return pdfBase64;
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate PDF');
+    }
+  };
+
+  // Function to send invoice email with PDF attachment
+  const sendInvoiceEmailWithPDF = async (invoiceData: any, pdfBase64: string) => {
+    try {
+      const emailData = {
+        user_email: invoiceData.user.email,
+        user_name: invoiceData.user.name,
+        booking_id: invoiceData.booking.booking_id,
+        service_name: invoiceData.booking.service_name,
+        total_amount: invoiceData.booking.total_amount,
+        service_date: invoiceData.booking.service_date,
+        service_time: invoiceData.booking.service_time,
+        address: invoiceData.user.address,
+        cart_items: invoiceData.booking.cart_items,
+        discount: invoiceData.booking.discount,
+        taxes: invoiceData.booking.taxes,
+        payment_status: invoiceData.booking.payment_status,
+        pdf_data: pdfBase64
+      };
+      
+      const response = await apiService.post('send_invoice_email_with_pdf.php', emailData);
+      
+      if (response?.status === 'success') {
+        console.log('✅ Invoice email with PDF sent successfully');
+        return true;
+      } else {
+        console.error('❌ Failed to send invoice email:', response?.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error sending invoice email:', error);
+      return false;
+    }
+  };
+
 
   if (typesLoading) {
     return (

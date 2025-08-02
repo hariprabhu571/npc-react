@@ -682,6 +682,22 @@ INSERT INTO `user_notifications` (`id`, `user_id`, `status_log_id`, `is_read`, `
 (39, 22, 29, 1, '2025-07-22 16:21:46', '2025-07-22 16:21:46'),
 (40, 24, 30, 1, '2025-07-26 06:30:16', '2025-07-26 06:30:16');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `email_logs`
+--
+
+CREATE TABLE `email_logs` (
+  `id` int(11) NOT NULL,
+  `user_email` varchar(255) NOT NULL,
+  `user_name` varchar(255) NOT NULL,
+  `booking_id` varchar(20) NOT NULL,
+  `service_name` varchar(100) NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `sent_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -819,6 +835,15 @@ ALTER TABLE `user_notifications`
   ADD KEY `idx_status_log_id` (`status_log_id`);
 
 --
+-- Indexes for table `email_logs`
+--
+ALTER TABLE `email_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_email` (`user_email`),
+  ADD KEY `idx_booking_id` (`booking_id`),
+  ADD KEY `idx_sent_at` (`sent_at`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -917,6 +942,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_notifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT for table `email_logs`
+--
+ALTER TABLE `email_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables

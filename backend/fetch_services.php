@@ -53,8 +53,6 @@ function fetchServices() {
         // Get location filter if provided
         $selectedLocation = isset($_POST['location']) ? trim($_POST['location']) : '';
         
-
-        
         // Base query
         $sql = "SELECT service_id, service_name, description, image_path, locations, created_at FROM services";
         $whereConditions = [];

@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['status' => 'error', 'message' => 'Session ID, address1, and email ID are required.']);
         exit;
     }
-
+    
+    
     $customer_name = $input['customer_name'] ?? null; // Optional field
     $mobile_number = $input['mobile_number'] ?? null; // Optional field
     $address1 = $input['address1'];
@@ -51,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user_id = $user['user_id'];
 
-    // Update user profile in the database
+    
     $updateStmt = $conn->prepare("UPDATE users SET customer_name = ?, mobile_number = ?, address1 = ?, address2 = ?, email_id = ?, gender = ?, country = ? WHERE user_id = ?");
     $updateStmt->bind_param("sssssssi", $customer_name, $mobile_number, $address1, $address2, $email_id, $gender, $country, $user_id);
 

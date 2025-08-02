@@ -282,7 +282,7 @@ const AppContent = () => {
         />
 
         <Route 
-          path="/invoice" 
+          path="/invoice/:bookingId?" 
           element={
             <ProtectedRoute allowedRoles={['User']}>
               <motion.div

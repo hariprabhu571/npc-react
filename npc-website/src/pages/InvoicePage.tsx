@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   FiArrowLeft,
@@ -32,6 +32,7 @@ interface InvoiceData {
 const InvoicePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { bookingId } = useParams<{ bookingId?: string }>();
   const { user } = useAuth();
   const invoiceRef = useRef<HTMLDivElement>(null);
   
@@ -40,6 +41,7 @@ const InvoicePage: React.FC = () => {
 
   useEffect(() => {
     console.log('InvoicePage: useEffect triggered');
+    console.log('InvoicePage: bookingId from URL params:', bookingId);
     // Try to get invoice data from localStorage first, then from location state
     const storedInvoiceData = localStorage.getItem('invoiceData');
     const storedTimestamp = localStorage.getItem('invoiceDataTimestamp');
