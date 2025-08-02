@@ -1,0 +1,7 @@
+# .gitignore
+node_modules/
+.cache/
+*.pack
+npc-website/node_modules/
+npc-website/.cache/
+npc-website/*.pack 
