@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore
@@ -35,7 +35,9 @@ import {
   FiEye,
   FiEyeOff,
   FiShare2,
-  FiShoppingCart
+  FiShoppingCart,
+  FiUser,
+  FiLogOut
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service } from '../types';
@@ -108,7 +110,7 @@ interface RazorpayResponse {
 
 const ServiceDetails: React.FC = () => {
   const { serviceName } = useParams<{ serviceName: string }>();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   
   console.log('ServiceDetails component - serviceName:', serviceName);
@@ -137,6 +139,57 @@ const ServiceDetails: React.FC = () => {
   const [showProcess, setShowProcess] = useState(false);
   const [showTestimonials, setShowTestimonials] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'reviews'>('overview');
+  
+  // Profile-related state
+  const [userProfile, setUserProfile] = useState<{ customer_name?: string; profile_pic?: string }>({});
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    try {
+      const response = await apiService.getProfile();
+      if (response.status === 'success' && response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Fetch profile on component mount
+  React.useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  // Handle click outside profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Profile dropdown handlers
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleProfileNavigation = () => {
+    navigate('/profile');
+    setShowProfileDropdown(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // Fetch service types
   const { data: serviceTypesData, isLoading: typesLoading, refetch } = useQuery(
@@ -701,107 +754,191 @@ const ServiceDetails: React.FC = () => {
       tempDiv.style.lineHeight = '1.6';
       tempDiv.style.color = '#333';
       
-      // Generate the invoice HTML content
+      // Generate the invoice HTML content - matching InvoicePage.tsx structure exactly
       const invoiceHTML = `
-        <div style="max-width: 800px; margin: 0 auto; background: white; padding: 40px; font-family: Arial, sans-serif;">
+        <div style="max-width: 800px; margin: 0 auto; background: white; padding: 32px; font-family: Arial, sans-serif; color: #333;">
           <!-- Header -->
-          <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #0d9488; padding-bottom: 20px;">
-            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-              <img src="/images/logo-npc.png" alt="NPC Logo" style="height: 60px; margin-right: 20px;">
-              <div>
-                <h1 style="margin: 0; color: #0d9488; font-size: 28px; font-weight: bold;">NPC Services</h1>
-                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Professional Pest Control Services</p>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+            <div>
+              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <div style="width: 48px; height: 48px; background: #0d9488; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                  <img src="/images/logo-npc.png" alt="NPC Pest Control Logo" style="width: 32px; height: 32px; object-fit: contain; display: block; max-width: 100%; height: auto;">
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; margin-left: 12px;">
+                  <h1 style="margin: 0; line-height: 1.2; font-size: 24px; font-weight: bold; color: #111827;">NPC Pest Control</h1>
+                  <p style="margin: 0; line-height: 1.2; color: #6b7280;">Professional Services</p>
+                </div>
+              </div>
+              <div style="font-size: 14px; color: #6b7280;">
+                <p style="margin: 4px 0;">NPC PVT LTD, NO. 158, Murugan Kovil Street</p>
+                <p style="margin: 4px 0;">Vanashakthi Nagar, Kolather, Chennai - 99</p>
+                <p style="margin: 4px 0;">Phone: +91 86374 54428</p>
+                <p style="margin: 4px 0;">Email: ashikali613@gmail.com</p>
               </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-              <div style="text-align: left;">
-                <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">INVOICE</h2>
-                <p style="margin: 5px 0; color: #666;"><strong>Invoice #:</strong> ${invoiceData.booking.booking_id}</p>
-                <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-              </div>
-              <div style="text-align: right;">
-                <div style="display: inline-block; padding: 8px 16px; background: ${invoiceData.booking.payment_status === 'paid' ? '#10b981' : '#f59e0b'}; color: white; border-radius: 4px; font-weight: bold; font-size: 12px;">
-                  ${invoiceData.booking.payment_status.toUpperCase()}
+            
+            <div style="text-align: right;">
+              <h2 style="margin: 0 0 8px 0; font-size: 30px; font-weight: bold; color: #111827;">INVOICE</h2>
+              <div style="font-size: 14px; color: #6b7280;">
+                <p style="margin: 4px 0;"><strong>Invoice Date:</strong> ${new Date().toLocaleDateString()}</p>
+                <p style="margin: 4px 0;"><strong>Invoice #:</strong> ${invoiceData.booking.booking_id}</p>
+                <div style="display: flex; align-items: center; margin-top: 8px;">
+                  <span style="margin-right: 8px;"><strong>Status:</strong></span>
+                  <span style="color: #111827; font-weight: 500;">
+                    ${invoiceData.booking.payment_status.charAt(0).toUpperCase() + invoiceData.booking.payment_status.slice(1)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Customer and Service Details -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+          <!-- Customer Information -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px;">
             <div>
-              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Bill To</h3>
-              <p style="margin: 5px 0; color: #333;"><strong>${invoiceData.user.name}</strong></p>
-              <p style="margin: 5px 0; color: #666;">${invoiceData.user.email}</p>
-              <p style="margin: 5px 0; color: #666;">${invoiceData.user.phone}</p>
-              <p style="margin: 5px 0; color: #666;">${invoiceData.user.address}</p>
+              <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600; color: #111827;">Bill To:</h3>
+              <div style="font-size: 14px; color: #374151;">
+                <p style="margin: 4px 0; font-weight: 600;">${invoiceData.user.name}</p>
+                <p style="margin: 4px 0;">${invoiceData.user.email}</p>
+                <p style="margin: 4px 0;">${invoiceData.user.phone}</p>
+                <p style="margin: 8px 0 0 0;">${invoiceData.user.address}</p>
+              </div>
             </div>
+            
             <div>
-              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Service Details</h3>
-              <p style="margin: 5px 0; color: #333;"><strong>Service:</strong> ${invoiceData.booking.service_name}</p>
-              <p style="margin: 5px 0; color: #666;"><strong>Date:</strong> ${invoiceData.booking.service_date}</p>
-              <p style="margin: 5px 0; color: #666;"><strong>Time:</strong> ${invoiceData.booking.service_time}</p>
-              <p style="margin: 5px 0; color: #666;"><strong>Payment Method:</strong> ${invoiceData.booking.payment_mode}</p>
+              <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600; color: #111827;">Service Details:</h3>
+              <div style="font-size: 14px; color: #374151;">
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                  <span style="margin-right: 8px;">📅</span>
+                  <span><strong>Service Date:</strong> ${new Date(invoiceData.booking.service_date).toLocaleDateString()}</span>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                  <span style="margin-right: 8px;">🕐</span>
+                  <span><strong>Time Slot:</strong> ${invoiceData.booking.service_time}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Items Table -->
-          <div style="margin-bottom: 30px;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <thead>
-                <tr style="background: #f8f9fa; border-bottom: 2px solid #0d9488;">
-                  <th style="padding: 15px; text-align: left; color: #333; font-weight: bold;">Service</th>
-                  <th style="padding: 15px; text-align: center; color: #333; font-weight: bold;">Room Size</th>
-                  <th style="padding: 15px; text-align: center; color: #333; font-weight: bold;">Quantity</th>
-                  <th style="padding: 15px; text-align: right; color: #333; font-weight: bold;">Price</th>
-                  <th style="padding: 15px; text-align: right; color: #333; font-weight: bold;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoiceData.booking.cart_items.map((item: any) => `
-                  <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px; text-align: left; color: #333;">${item.service_type_name}</td>
-                    <td style="padding: 15px; text-align: center; color: #666;">${item.room_size}</td>
-                    <td style="padding: 15px; text-align: center; color: #666;">${item.quantity}</td>
-                    <td style="padding: 15px; text-align: right; color: #666;">₹${item.price}</td>
-                    <td style="padding: 15px; text-align: right; color: #333; font-weight: bold;">₹${item.price * item.quantity}</td>
+          <!-- Service Items -->
+          <div style="margin-bottom: 32px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827;">Service Details</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f9fafb;">
+                  <tr>
+                    <th style="padding: 24px 24px 12px 24px; text-align: left; font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">
+                      Service
+                    </th>
+                    <th style="padding: 24px 24px 12px 24px; text-align: left; font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">
+                      Description
+                    </th>
+                    <th style="padding: 24px 24px 12px 24px; text-align: right; font-size: 12px; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">
+                      Amount
+                    </th>
                   </tr>
-                `).join('')}
-              </tbody>
-            </table>
+                </thead>
+                <tbody style="background: white;">
+                  <!-- Main Service -->
+                  <tr>
+                    <td style="padding: 16px 24px; font-size: 14px; font-weight: 500; color: #111827; white-space: nowrap;">
+                      ${invoiceData.booking.service_name}
+                    </td>
+                    <td style="padding: 16px 24px; font-size: 14px; color: #6b7280;">
+                      ${invoiceData.booking.service_description || 'Professional pest control service'}
+                    </td>
+                    <td style="padding: 16px 24px; font-size: 14px; color: #111827; text-align: right; white-space: nowrap;">
+                      -
+                    </td>
+                  </tr>
+                  
+                  <!-- Sub-services -->
+                  ${invoiceData.booking.cart_items && invoiceData.booking.cart_items.length > 0 ? 
+                    invoiceData.booking.cart_items.map((item: any) => `
+                      <tr style="background: #f9fafb;">
+                        <td style="padding: 8px 24px; font-size: 14px; font-weight: 500; color: #111827; white-space: nowrap; padding-left: 48px;">
+                          • ${item.service_type_name} - ${item.room_size}
+                        </td>
+                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
+                          Quantity: ${item.quantity} × ₹${item.price}
+                        </td>
+                        <td style="padding: 8px 24px; font-size: 14px; color: #111827; text-align: right; white-space: nowrap;">
+                          ₹${item.price * item.quantity}
+                        </td>
+                      </tr>
+                    `).join('') : 
+                    `<tr style="background: #f9fafb;">
+                      <td style="padding: 8px 24px; font-size: 14px; font-weight: 500; color: #111827; white-space: nowrap; padding-left: 48px;">
+                        • ${invoiceData.booking.service_name}
+                      </td>
+                      <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
+                        Professional pest control service
+                      </td>
+                      <td style="padding: 8px 24px; font-size: 14px; color: #111827; text-align: right; white-space: nowrap;">
+                        ₹${invoiceData.booking.item_total}
+                      </td>
+                    </tr>`
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Payment Summary -->
-          <div style="margin-left: auto; width: 300px;">
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-              <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">Payment Summary</h3>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #666;">Subtotal:</span>
-                <span style="color: #333; font-weight: bold;">₹${invoiceData.booking.item_total}</span>
-              </div>
-              ${invoiceData.booking.discount > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                  <span style="color: #666;">Discount:</span>
-                  <span style="color: #10b981; font-weight: bold;">-₹${invoiceData.booking.discount}</span>
+          <div style="display: flex; justify-content: flex-end;">
+            <div style="width: 320px;">
+              <div style="background: #f9fafb; border-radius: 8px; padding: 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827;">Payment Summary</h3>
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px;">
+                    <span style="color: #6b7280;">Item Total:</span>
+                    <span style="color: #111827;">₹${invoiceData.booking.item_total}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px;">
+                    <span style="color: #6b7280;">Discount:</span>
+                    <span style="color: #059669;">-₹${invoiceData.booking.discount || 0}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px;">
+                    <span style="color: #6b7280;">Taxes:</span>
+                    <span style="color: #111827;">₹${invoiceData.booking.taxes}</span>
+                  </div>
+                  <div style="border-top: 1px solid #e5e7eb; padding-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 600;">
+                      <span style="color: #111827;">Total Amount:</span>
+                      <span style="color: #0d9488;">₹${invoiceData.booking.total_amount}</span>
+                    </div>
+                  </div>
                 </div>
-              ` : ''}
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #666;">Taxes:</span>
-                <span style="color: #333; font-weight: bold;">₹${invoiceData.booking.taxes}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #0d9488; font-size: 18px; font-weight: bold;">
-                <span style="color: #333;">Total:</span>
-                <span style="color: #0d9488;">₹${invoiceData.booking.total_amount}</span>
+                
+                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 8px;">
+                    <span style="color: #6b7280;">Payment Status:</span>
+                    <span style="color: #111827; font-weight: 500;">
+                      ${invoiceData.booking.payment_status.charAt(0).toUpperCase() + invoiceData.booking.payment_status.slice(1)}
+                    </span>
+                  </div>
+                  ${invoiceData.booking.payment_mode ? `
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                      <span style="color: #6b7280;">Payment Mode:</span>
+                      <span style="color: #111827;">${invoiceData.booking.payment_mode}</span>
+                    </div>
+                  ` : ''}
+                  ${invoiceData.booking.payment_id ? `
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                      <span style="color: #6b7280;">Payment ID:</span>
+                      <span style="color: #111827; font-family: monospace;">${invoiceData.booking.payment_id}</span>
+                    </div>
+                  ` : ''}
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px;">
-            <p style="margin: 5px 0;">Thank you for choosing NPC Services!</p>
-            <p style="margin: 5px 0;">For any queries, contact us at paymentnpc@gmail.com</p>
-            <p style="margin: 5px 0;">This is a computer-generated invoice.</p>
-          </div>
+                     <!-- Footer -->
+           <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid #e5e7eb;">
+             <div style="text-align: center; font-size: 12px; color: #6b7280;">
+               <p style="margin: 0;">This is a computer-generated invoice.</p>
+             </div>
+           </div>
         </div>
       `;
       
@@ -919,36 +1056,74 @@ const ServiceDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Enhanced Header */}
+      {/* Header - Same as User Dashboard */}
       <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <FiArrowLeft className="w-5 h-5" />
-              </button>
-              <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900">{serviceInfo.service_name}</h1>
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="flex items-center">
-                    <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600 ml-1">4.8</span>
-                  </div>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-sm text-gray-500">2.5K+ bookings</span>
-                </div>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-6 h-6 text-white hidden" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">NPC</h1>
+                <p className="text-sm text-gray-500">Professional Services</p>
               </div>
             </div>
+            
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <FiHeart className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <FiShare2 className="w-5 h-5" />
-              </button>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Welcome back,</p>
+                <p className="text-sm text-gray-500">{userProfile.customer_name || user?.name || 'User'}</p>
+              </div>
+              <div className="relative" ref={profileDropdownRef}>
+                <button
+                  onClick={handleProfileClick}
+                  className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+                >
+                  {userProfile.profile_pic ? (
+                    <img 
+                      src={`${API_BASE_URL}${userProfile.profile_pic.replace(/^\/+/, '')}`}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <FiUser className="w-4 h-4 text-white hidden" />
+                </button>
+                
+                {/* Profile Dropdown */}
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <button
+                      onClick={handleProfileNavigation}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiUser className="w-4 h-4 mr-3" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiLogOut className="w-4 h-4 mr-3" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
