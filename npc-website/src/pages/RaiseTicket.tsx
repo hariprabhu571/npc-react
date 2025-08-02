@@ -52,6 +52,7 @@ interface UserProfile {
   customer_name?: string;
   email_id?: string;
   mobile_number?: string;
+  profile_pic?: string;
 }
 
 const RaiseTicket: React.FC = () => {
@@ -211,7 +212,7 @@ const RaiseTicket: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50">
       {/* Header */}
       <motion.header 
-        className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200"
+        className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -242,11 +243,32 @@ const RaiseTicket: React.FC = () => {
                 <p className="text-sm text-gray-500">Get help from our support team</p>
               </div>
             </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Welcome,</p>
+                <p className="text-sm text-gray-500">{userProfile.customer_name || user?.name || 'User'}</p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                {userProfile.profile_pic ? (
+                  <img 
+                    src={`${API_BASE_URL}${userProfile.profile_pic.replace(/^\/+/, '')}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <FiUser className="w-4 h-4 text-white hidden" />
+              </div>
+            </div>
           </div>
         </div>
       </motion.header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">

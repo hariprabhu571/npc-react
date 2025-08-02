@@ -13,7 +13,8 @@ import {
   FiClock as FiPending,
   FiStar,
   FiSearch,
-  FiTag
+  FiTag,
+  FiUser
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Booking, BookingsResponse } from '../types';
@@ -77,7 +78,8 @@ const BookingHistory: React.FC = () => {
     
     switch (sortBy) {
       case 'date':
-        comparison = new Date(a.service_date).getTime() - new Date(b.service_date).getTime();
+        // Use created_at for date sorting to show latest bookings first
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         break;
       case 'amount':
         comparison = a.total_amount - b.total_amount;
@@ -172,7 +174,7 @@ const BookingHistory: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -182,8 +184,18 @@ const BookingHistory: React.FC = () => {
               >
                 <FiArrowLeft className="w-5 h-5" />
               </button>
-              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                <FiShield className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-6 h-6 text-white hidden" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">NPC</h1>
@@ -191,15 +203,20 @@ const BookingHistory: React.FC = () => {
               </div>
             </div>
             
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Welcome,</p>
-              <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Welcome,</p>
+                <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                <FiUser className="w-4 h-4 text-white" />
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -264,7 +281,7 @@ const BookingHistory: React.FC = () => {
                   onChange={(e) => setSortBy(e.target.value as 'date' | 'amount' | 'service')}
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 >
-                  <option value="date">Date</option>
+                  <option value="date">Booking Date</option>
                   <option value="amount">Amount</option>
                   <option value="service">Service</option>
                 </select>
@@ -546,10 +563,6 @@ const BookingHistory: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Booking Date</label>
                       <p className="text-sm text-gray-900">{formatDate(selectedBooking.booking_date)}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Created</label>
-                      <p className="text-sm text-gray-900">{selectedBooking.created_at_formatted || formatDate(selectedBooking.created_at)}</p>
                     </div>
                   </div>
                 </div>

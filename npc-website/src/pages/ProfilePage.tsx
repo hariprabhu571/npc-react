@@ -182,7 +182,7 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -192,8 +192,18 @@ const ProfilePage: React.FC = () => {
               >
                 <FiArrowLeft className="w-5 h-5" />
               </button>
-              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                <FiShield className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/images/logo-npc.png" 
+                  alt="NPC Pest Control Logo"
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to shield icon if logo fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                <FiShield className="w-6 h-6 text-white hidden" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">NPC</h1>
@@ -201,15 +211,31 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
             
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Welcome,</p>
-              <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">Welcome,</p>
+                <p className="text-sm text-gray-500">{profile?.customer_name || user?.name || 'User'}</p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                {profile?.profile_pic && getImageUrl(profile.profile_pic) ? (
+                  <img 
+                    src={getImageUrl(profile.profile_pic)!}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <FiUser className="w-4 h-4 text-white hidden" />
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
