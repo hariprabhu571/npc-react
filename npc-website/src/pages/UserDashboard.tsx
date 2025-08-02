@@ -19,7 +19,8 @@ import {
   FiCopy,
   FiExternalLink,
   FiShield as FiPrivacy,
-  FiMessageSquare
+  FiMessageSquare,
+  FiShoppingCart
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service, Offer, ServicesResponse, OffersResponse } from '../types';
@@ -267,6 +268,7 @@ const UserDashboard: React.FC = () => {
   const navigationItems = [
     { icon: FiHome, label: 'Home', active: true, onClick: () => {} },
     { icon: FiCalendar, label: 'Bookings', onClick: () => navigate('/bookings') },
+    { icon: FiShoppingCart, label: 'Cart', onClick: () => navigate('/cart') },
     { icon: FiMessageSquare, label: 'Raise a Ticket', onClick: () => navigate('/raise-ticket') },
     { icon: FiShare2, label: 'Share', onClick: () => navigate('/share') },
     { icon: FiPrivacy, label: 'Privacy Policy', onClick: () => navigate('/privacy-policy') },

@@ -354,6 +354,44 @@ const ServiceDetails: React.FC = () => {
     });
   };
 
+  const addAllToCart = () => {
+    if (cartItems.length === 0) {
+      toast.error('Please select at least one service');
+      return;
+    }
+
+    // Get the global cart from localStorage
+    const globalCart = JSON.parse(localStorage.getItem('globalCart') || '[]');
+    
+    // Add all current cart items to global cart
+    const updatedGlobalCart = [...globalCart];
+    
+    cartItems.forEach(item => {
+      const existingItem = updatedGlobalCart.find(
+        globalItem => globalItem.service_type_id === item.service_type_id && globalItem.room_size === item.room_size
+      );
+
+      if (existingItem) {
+        existingItem.quantity += item.quantity;
+      } else {
+        updatedGlobalCart.push({
+          ...item,
+          service_name: serviceInfo.service_name,
+          service_image: serviceInfo.image_path
+        });
+      }
+    });
+
+    // Save to localStorage
+    localStorage.setItem('globalCart', JSON.stringify(updatedGlobalCart));
+    
+    // Clear the current cart
+    setCartItems([]);
+    
+    toast.success('All services added to cart!');
+    navigate('/cart');
+  };
+
   const removeFromCart = (serviceTypeId: number, roomSize: string) => {
     console.log('Removing from cart:', { serviceTypeId, roomSize });
     setCartItems(prev => {
@@ -1731,18 +1769,24 @@ const ServiceDetails: React.FC = () => {
                  )}
               </motion.div>
 
-              {/* Action Button */}
+              {/* Action Buttons */}
               {currentStep === 'types' && cartItems.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6"
+                  className="bg-white rounded-2xl shadow-lg p-6 space-y-3"
                 >
                   <button
                     onClick={handleProceedToDetails}
                     className="w-full px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold hover:from-teal-700 hover:to-teal-800 transition-all duration-200 transform hover:scale-105 shadow-lg"
                   >
                     Continue to Details
+                  </button>
+                  <button
+                    onClick={addAllToCart}
+                    className="w-full px-6 py-3 border border-teal-600 text-teal-600 rounded-xl font-semibold hover:bg-teal-50 transition-all duration-200"
+                  >
+                    Add to Cart
                   </button>
                 </motion.div>
               )}

@@ -20,6 +20,8 @@ import RaiseTicket from './pages/RaiseTicket';
 import OffersManagement from './pages/OffersManagement';
 import SharePage from './pages/SharePage';
 import InvoicePage from './pages/InvoicePage';
+import CartPage from './pages/CartPage';
+import MultiServiceBooking from './pages/MultiServiceBooking';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route Component
@@ -171,6 +173,36 @@ const AppContent = () => {
                 exit={{ opacity: 0 }}
               >
                 <BookingHistory />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/cart" 
+          element={
+            <ProtectedRoute allowedRoles={['User']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <CartPage />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/multi-service-booking" 
+          element={
+            <ProtectedRoute allowedRoles={['User']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <MultiServiceBooking />
               </motion.div>
             </ProtectedRoute>
           } 
