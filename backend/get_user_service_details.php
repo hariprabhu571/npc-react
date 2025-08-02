@@ -92,11 +92,19 @@ try {
     
     $result_details = $stmt_details->get_result();
 
+    // Create service_info object regardless of whether service details exist
+    $service_info = [
+        'service_name' => $service_name,
+        'service_description' => null, // Will be updated if service details exist
+        'image_path' => $service_image_path
+    ];
+
     // Check if any service details found
     if ($result_details->num_rows === 0) {
         echo json_encode([
             "status" => "success",
             "message" => "No service options available for this service",
+            "service_info" => $service_info,
             "data" => []
         ]);
         exit;
@@ -104,16 +112,11 @@ try {
 
     // Group by service_type_name and collect service info
     $grouped_data = [];
-    $service_info = null;
     
     while ($row = $result_details->fetch_assoc()) {
-        // Store service info from first row
-        if ($service_info === null) {
-            $service_info = [
-                'service_name' => $row['service_name'],
-                'service_description' => $row['service_description'],
-                'image_path' => $service_image_path
-            ];
+        // Update service info from first row (only description needs updating)
+        if ($service_info['service_description'] === null) {
+            $service_info['service_description'] = $row['service_description'];
         }
         
         $service_type_name = $row['service_type_name'];

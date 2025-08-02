@@ -447,6 +447,25 @@ const BookingHistory: React.FC = () => {
                         >
                           Book Again
                         </button>
+                        {(booking.status === 'confirmed' || booking.status === 'completed') && (
+                          <button
+                            onClick={() => {
+                              const invoiceData = {
+                                booking: booking,
+                                user: {
+                                  name: user?.name || 'Customer',
+                                  email: user?.email || '',
+                                  phone: user?.mobile || '',
+                                  address: booking.address
+                                }
+                              };
+                              navigate('/invoice', { state: { invoiceData } });
+                            }}
+                            className="px-4 py-2 text-sm font-semibold text-green-600 border-2 border-green-300 rounded-xl hover:bg-green-50 hover:border-green-400 transition-all duration-200 shadow-sm"
+                          >
+                            Invoice
+                          </button>
+                        )}
                       </div>
                       <button
                         onClick={() => {
@@ -609,6 +628,26 @@ const BookingHistory: React.FC = () => {
 
               {/* Modal Actions */}
               <div className="mt-6 flex justify-end space-x-3">
+                {(selectedBooking.status === 'confirmed' || selectedBooking.status === 'completed') && (
+                  <button
+                    onClick={() => {
+                      const invoiceData = {
+                        booking: selectedBooking,
+                        user: {
+                          name: user?.name || 'Customer',
+                          email: user?.email || '',
+                          phone: user?.mobile || '',
+                          address: selectedBooking.address
+                        }
+                      };
+                      setShowDetailsModal(false);
+                      navigate('/invoice', { state: { invoiceData } });
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Download Invoice
+                  </button>
+                )}
                 <button
                   onClick={() => setShowDetailsModal(false)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"

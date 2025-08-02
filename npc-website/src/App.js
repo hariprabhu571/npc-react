@@ -18,6 +18,8 @@ import ChangePassword from './pages/ChangePassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import RaiseTicket from './pages/RaiseTicket';
 import OffersManagement from './pages/OffersManagement';
+import SharePage from './pages/SharePage';
+import InvoicePage from './pages/InvoicePage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route Component
@@ -259,6 +261,36 @@ const AppContent = () => {
                 exit={{ opacity: 0 }}
               >
                 <OffersManagement />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/share" 
+          element={
+            <ProtectedRoute allowedRoles={['User']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <SharePage />
+              </motion.div>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/invoice" 
+          element={
+            <ProtectedRoute allowedRoles={['User']}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <InvoicePage />
               </motion.div>
             </ProtectedRoute>
           } 

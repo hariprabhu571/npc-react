@@ -109,4 +109,78 @@
       @apply px-5 py-2.5 text-sm;
     }
   }
+}
+
+/* Print styles for invoice */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  header, 
+  .no-print {
+    display: none !important;
+  }
+  
+  .invoice-container {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  .invoice-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+  
+  /* Hide background colors and shadows for print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  /* Ensure images display properly in print */
+  img {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Invoice specific print styles */
+  .invoice-content {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+    line-height: 1.4 !important;
+  }
+  
+  .invoice-content .flex {
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .invoice-content .space-x-3 > * + * {
+    margin-left: 0.75rem !important;
+  }
+  
+  .invoice-content .mb-4 {
+    margin-bottom: 1rem !important;
+  }
+  
+  .invoice-content .text-2xl {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .invoice-content .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .invoice-content .text-gray-900 {
+    color: #111827 !important;
+  }
 } 

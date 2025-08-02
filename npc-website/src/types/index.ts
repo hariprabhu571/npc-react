@@ -85,6 +85,14 @@ export interface ServiceTypeData {
   id?: number;
 }
 
+export interface CartItem {
+  service_type_id: number;
+  service_type_name: string;
+  room_size: string;
+  price: number;
+  quantity: number;
+}
+
 export interface PricingField {
   roomSize: string;
   price: string;
@@ -98,9 +106,11 @@ export interface Booking {
   service_name: string;
   service_description?: string;
   service_image?: string | null;
+  cart_items?: CartItem[];
   category?: string;
   space_type?: string;
   item_total: number;
+  discount?: number;
   taxes: number;
   total_amount: number;
   booking_date: string;

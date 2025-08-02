@@ -30,7 +30,8 @@ import {
   FiHeart,
   FiEye,
   FiEyeOff,
-  FiShare2
+  FiShare2,
+  FiShoppingCart
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { Service } from '../types';
@@ -541,9 +542,94 @@ const ServiceDetails: React.FC = () => {
           await updatePaymentStatus(bookingId, razorpayPaymentId);
         }
 
-        toast.success('Booking created successfully!');
-        // Navigate to booking confirmation or dashboard
-        navigate('/dashboard');
+        // Fetch user profile to get the correct name
+        let userProfile = null;
+        try {
+          const profileResponse = await apiService.getProfile();
+          if (profileResponse.status === 'success' && profileResponse.data) {
+            userProfile = profileResponse.data;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+
+        // Create booking object for invoice
+        const bookingData = {
+          booking_id: bookingId,
+          service_name: serviceName,
+          service_date: selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          service_time: selectedTime,
+          address: address,
+          special_notes: notes,
+          item_total: calculateSubtotal(),
+          discount: calculateDiscount() + couponDiscount, // Include both regular discount and coupon discount
+          taxes: 0, // You can calculate taxes if needed
+          total_amount: calculateTotal(),
+          payment_status: razorpayPaymentId ? 'paid' : 'pending',
+          payment_mode: selectedPaymentMethod,
+          payment_id: razorpayPaymentId,
+          status: 'confirmed',
+          created_at: new Date().toISOString(),
+          booking_date: new Date().toISOString().split('T')[0],
+          cart_items: cartItems // Include cart items for sub-services
+        };
+
+        // Create invoice data with actual user profile data
+        const invoiceData = {
+          booking: bookingData,
+          user: {
+            name: userProfile?.customer_name || user?.name || 'Customer',
+            email: userProfile?.email_id || user?.email || '',
+            phone: userProfile?.mobile_number || user?.mobile || '',
+            address: address
+          }
+        };
+
+        console.log('ServiceDetails: Created invoice data:', invoiceData);
+
+        // Store invoice data in localStorage first
+        localStorage.setItem('invoiceData', JSON.stringify(invoiceData));
+        console.log('ServiceDetails: Stored invoice data in localStorage');
+        
+        // Also store a timestamp to ensure fresh data
+        localStorage.setItem('invoiceDataTimestamp', Date.now().toString());
+        
+        toast.success('Booking created successfully! Opening invoice in new tab...');
+        
+        // Small delay to ensure booking is fully processed
+        setTimeout(() => {
+          // Open invoice page in new tab
+          const invoiceUrl = `${window.location.origin}/invoice`;
+          console.log('ServiceDetails: Opening invoice URL:', invoiceUrl);
+          const newTab = window.open(invoiceUrl, '_blank');
+          
+          // Check if popup was blocked
+          if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+            console.log('ServiceDetails: Popup was blocked');
+            toast.error('Popup blocked! Invoice will be available in your bookings. Please allow popups for automatic download.', {
+              duration: 5000,
+              style: {
+                background: '#fef3c7',
+                color: '#92400e',
+                border: '1px solid #f59e0b'
+              }
+            });
+            // Still redirect to bookings page
+            navigate('/bookings');
+          } else {
+            console.log('ServiceDetails: Popup opened successfully');
+            toast.success('Invoice opened in new tab and will download automatically!', {
+              duration: 3000,
+              style: {
+                background: '#d1fae5',
+                color: '#065f46',
+                border: '1px solid #10b981'
+              }
+            });
+            // Redirect current page to bookings page
+            navigate('/bookings');
+          }
+        }, 1500); // Increased delay to give more time for the popup
       } else {
         toast.error(responseData.message || 'Booking creation failed');
       }
@@ -613,7 +699,7 @@ const ServiceDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Enhanced Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -647,7 +733,7 @@ const ServiceDetails: React.FC = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
@@ -680,11 +766,7 @@ const ServiceDetails: React.FC = () => {
                     <FiShield className="w-16 h-16 text-white" />
                   </div>
                                                   )}
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center text-white">
-                                      <h2 className="text-3xl font-bold mb-2">{serviceInfo.service_name}</h2>
-                                    </div>
-                                  </div>
+                                  
                 {/* Service Image Placeholder - only show if no image */}
                 {!serviceInfo.image_path && (
                   <div className="absolute top-4 right-4 w-24 h-24 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -692,26 +774,57 @@ const ServiceDetails: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+            </motion.div>
+
+            {/* Green Area Card - Service Details */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl shadow-lg mb-6"
+            >
               <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <FiTimeIcon className="w-4 h-4 mr-1" />
-                      <span>2-3 hours</span>
+                {/* Service Name and Image Section */}
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-white bg-opacity-20 flex-shrink-0">
+                    {serviceInfo.image_path ? (
+                      <img
+                        src={getImageUrl(serviceInfo.image_path)!}
+                        alt={serviceInfo.service_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Service card image failed to load:', e.currentTarget.src);
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                        onLoad={() => {
+                          console.log('Service card image loaded successfully:', serviceInfo.image_path);
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center bg-teal-600 ${serviceInfo.image_path ? 'hidden' : ''}`}>
+                      <FiShield className="w-8 h-8 text-white" />
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <FiTruck className="w-4 h-4 mr-1" />
-                      <span>Same day available</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <FiShieldIcon className="w-4 h-4 mr-1" />
-                      <span>90-day warranty</span>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-white mb-1">{serviceInfo.service_name}</h2>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center text-sm text-white text-opacity-90">
+                        <FiTimeIcon className="w-4 h-4 mr-1" />
+                        <span>2-3 hours</span>
+                      </div>
+                      <div className="flex items-center text-sm text-white text-opacity-90">
+                        <FiTruck className="w-4 h-4 mr-1" />
+                        <span>Same day available</span>
+                      </div>
+                      <div className="flex items-center text-sm text-white text-opacity-90">
+                        <FiShieldIcon className="w-4 h-4 mr-1" />
+                        <span>90-day warranty</span>
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-teal-600">₹{serviceTypes[0]?.pricing[0]?.price || 999}</div>
-                    <div className="text-sm text-gray-500">Starting price</div>
+                    <div className="text-3xl font-bold text-white">₹{serviceTypes[0]?.pricing[0]?.price || 999}</div>
+                    <div className="text-sm text-white text-opacity-90">Starting price</div>
                   </div>
                 </div>
               </div>
@@ -1166,53 +1279,61 @@ const ServiceDetails: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               {/* Cart Summary */}
-              {cartItems.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 mb-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Selected Services</h3>
-                    <div className="text-sm text-teal-600 font-medium">
-                      {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
-                    </div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Selected Services</h3>
+                  <div className="text-sm text-teal-600 font-medium">
+                    {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
                   </div>
-                  
-                  <div className="space-y-3 mb-4">
-                    {cartItems.map((item) => (
-                      <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <span className="font-medium text-gray-900 text-sm">{item.service_type_name}</span>
-                          <p className="text-xs text-gray-600">{item.room_size} x {item.quantity}</p>
+                </div>
+                
+                {cartItems.length > 0 ? (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {cartItems.map((item) => (
+                        <div key={`${item.service_type_id}_${item.room_size}`} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <span className="font-medium text-gray-900 text-sm">{item.service_type_name}</span>
+                            <p className="text-xs text-gray-600">{item.room_size} x {item.quantity}</p>
+                          </div>
+                          <span className="font-semibold text-teal-600">₹{item.price * item.quantity}</span>
                         </div>
-                        <span className="font-semibold text-teal-600">₹{item.price * item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-semibold">₹{calculateSubtotal()}</span>
+                      ))}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Discount (15%):</span>
-                      <span className="font-semibold text-green-600">-₹{calculateDiscount()}</span>
-                    </div>
-                    {isCouponApplied && (
+                    
+                    <div className="border-t pt-4 space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Coupon:</span>
-                        <span className="font-semibold text-green-600">-₹{couponDiscount.toFixed(0)}</span>
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="font-semibold">₹{calculateSubtotal()}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span className="text-lg font-bold text-gray-900">Total:</span>
-                      <span className="text-xl font-bold text-teal-600">₹{calculateTotal()}</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Discount (15%):</span>
+                        <span className="font-semibold text-green-600">-₹{calculateDiscount()}</span>
+                      </div>
+                      {isCouponApplied && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Coupon:</span>
+                          <span className="font-semibold text-green-600">-₹{couponDiscount.toFixed(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span className="text-lg font-bold text-gray-900">Total:</span>
+                        <span className="text-xl font-bold text-teal-600">₹{calculateTotal()}</span>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
+                  </>
+                                 ) : (
+                   <div className="text-center py-8">
+                     <div className="text-gray-400">
+                       <FiShoppingCart className="w-12 h-12 mx-auto" />
+                     </div>
+                   </div>
+                 )}
+              </motion.div>
 
               {/* Action Button */}
               {currentStep === 'types' && cartItems.length > 0 && (
@@ -1284,42 +1405,7 @@ const ServiceDetails: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Service Image */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-lg p-6 mt-6"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Preview</h3>
-                <div className="relative h-48 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl overflow-hidden">
-                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                  {serviceInfo.image_path && getImageUrl(serviceInfo.image_path) ? (
-                    <img
-                      src={getImageUrl(serviceInfo.image_path)!}
-                      alt={serviceInfo.service_name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => {
-                        console.log('Sidebar image failed to load:', e.currentTarget.src);
-                        console.log('Original image path:', serviceInfo.image_path);
-                        console.log('Constructed URL:', getImageUrl(serviceInfo.image_path));
-                        // Fallback to icon if image fails to load
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                      onLoad={() => {
-                        console.log('Sidebar image loaded successfully:', serviceInfo.image_path);
-                      }}
-                    />
-                  ) : null}
-                  <div className={`absolute inset-0 flex items-center justify-center ${serviceInfo.image_path ? 'hidden' : ''}`}>
-                    <FiShield className="w-16 h-16 text-white" />
-                  </div>
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <p className="text-sm font-medium">{serviceInfo.service_name}</p>
-                    <p className="text-xs opacity-90">Professional Service</p>
-                  </div>
-                </div>
-              </motion.div>
+
             </div>
           </div>
         </div>
