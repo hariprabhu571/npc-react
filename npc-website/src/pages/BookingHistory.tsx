@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -19,9 +19,16 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Booking, BookingsResponse } from '../types';
 import { apiService } from '../services/api';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 import { useQuery } from 'react-query';
 import toast from 'react-hot-toast';
+
+interface UserProfile {
+  customer_name?: string;
+  email_id?: string;
+  mobile_number?: string;
+  profile_pic?: string;
+}
 
 const BookingHistory: React.FC = () => {
   const { user } = useAuth();
@@ -32,6 +39,24 @@ const BookingHistory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'service'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    try {
+      const response = await apiService.getProfile();
+      if (response.status === 'success' && response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Fetch profile on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   // Fetch bookings
   const { data: bookingsData, isLoading, refetch } = useQuery(
@@ -206,10 +231,21 @@ const BookingHistory: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">Welcome,</p>
-                <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+                <p className="text-sm text-gray-500">{userProfile.customer_name || user?.name || 'User'}</p>
               </div>
               <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
-                <FiUser className="w-4 h-4 text-white" />
+                {userProfile.profile_pic ? (
+                  <img 
+                    src={`${API_BASE_URL}${userProfile.profile_pic.replace(/^\/+/, '')}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <FiUser className="w-4 h-4 text-white hidden" />
               </div>
             </div>
           </div>

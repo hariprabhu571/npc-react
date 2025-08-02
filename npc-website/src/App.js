@@ -194,7 +194,7 @@ const AppContent = () => {
         <Route 
           path="/profile" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['User']}>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

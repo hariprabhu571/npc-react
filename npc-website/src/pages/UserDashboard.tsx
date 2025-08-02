@@ -47,6 +47,13 @@ const getOfferImageUrl = (imagePath?: string): string | null => {
   return `${API_BASE_URL}${imagePath.replace(/^\/+/, '')}`;
 };
 
+interface UserProfile {
+  customer_name?: string;
+  email_id?: string;
+  mobile_number?: string;
+  profile_pic?: string;
+}
+
 const UserDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -58,8 +65,42 @@ const UserDashboard: React.FC = () => {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    try {
+      const response = await apiService.getProfile();
+      if (response.status === 'success' && response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Fetch profile on component mount
+  React.useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  // Handle click outside profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fetch services
   const { data: servicesData, isLoading: servicesLoading, refetch: refetchServices } = useQuery(
@@ -124,6 +165,15 @@ const UserDashboard: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleProfileNavigation = () => {
+    setShowProfileDropdown(false);
+    navigate('/profile');
   };
 
   // Location detection and management functions
@@ -252,14 +302,47 @@ const UserDashboard: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">Welcome back,</p>
-                <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+                <p className="text-sm text-gray-500">{userProfile.customer_name || user?.name || 'User'}</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <FiLogOut className="w-5 h-5" />
-              </button>
+              <div className="relative" ref={profileDropdownRef}>
+                <button
+                  onClick={handleProfileClick}
+                  className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
+                >
+                  {userProfile.profile_pic ? (
+                    <img 
+                      src={`${API_BASE_URL}${userProfile.profile_pic.replace(/^\/+/, '')}`}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <FiUser className="w-4 h-4 text-white hidden" />
+                </button>
+                
+                {/* Profile Dropdown */}
+                {showProfileDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <button
+                      onClick={handleProfileNavigation}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiUser className="w-4 h-4 mr-3" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <FiLogOut className="w-4 h-4 mr-3" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

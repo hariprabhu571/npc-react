@@ -35,6 +35,8 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+
   const [formData, setFormData] = useState({
     customer_name: user?.name || '',
     email_id: user?.email || '',

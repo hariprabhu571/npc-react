@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FiArrowLeft, 
@@ -16,10 +16,13 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiGlobe,
-  FiAward
+  FiAward,
+  FiUser
 } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { apiService } from '../services/api';
+import { API_BASE_URL } from '../config/api';
 
 interface SectionProps {
   title: string;
@@ -90,12 +93,37 @@ const Section: React.FC<SectionProps> = ({ title, icon, content, isExpanded, onT
   </motion.div>
 );
 
+interface UserProfile {
+  customer_name?: string;
+  email_id?: string;
+  mobile_number?: string;
+  profile_pic?: string;
+}
+
 const PrivacyPolicy: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     'Information We Collect': true,
   });
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    try {
+      const response = await apiService.getProfile();
+      if (response.status === 'success' && response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Fetch profile on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   const toggleSection = (title: string) => {
     setExpandedSections(prev => ({
@@ -203,7 +231,21 @@ const PrivacyPolicy: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">Welcome back,</p>
-                <p className="text-sm text-gray-500">{user?.name || 'User'}</p>
+                <p className="text-sm text-gray-500">{userProfile.customer_name || user?.name || 'User'}</p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                {userProfile.profile_pic ? (
+                  <img 
+                    src={`${API_BASE_URL}${userProfile.profile_pic.replace(/^\/+/, '')}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <FiUser className="w-4 h-4 text-white hidden" />
               </div>
             </div>
           </div>
